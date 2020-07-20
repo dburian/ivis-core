@@ -13,7 +13,6 @@ import {Button, ButtonDropdown, Icon} from "./bootstrap-components";
 import {intervalAccessMixin} from "../ivis/TimeContext";
 import moment from "moment";
 
-//TODO: ensure same interval interpretation
 const defaultPlaybackSpeedSteps = [
     1,
     moment.duration(1, "m").asSeconds(),

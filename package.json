@@ -25,7 +25,5 @@
   "devDependencies": {
     "nodemon": "^2.0.2"
   },
-  "dependencies": {
-    "systeminformation": "^4.26.9"
-  }
+  "dependencies": {}
 }

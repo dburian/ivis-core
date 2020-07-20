@@ -19,7 +19,7 @@ export * from './Legend';
 export * from './SVG';
 export * from './Records';
 export * from './Selector';
-export * from './Animation';
+export * from './AnimationCommon';
 export * from './LiveAnimation';
 export * from './RecordedAnimation';
 export * from './Debug';

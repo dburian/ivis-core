@@ -143,7 +143,9 @@ export default class ParamTypes {
             },
             render: (self, prefix, spec) => <InputField key={spec.id} id={this.getParamFormId(prefix, spec.id)}
                                                         label={spec.label} help={spec.help}/>,
-            upcast: (spec, value) => Number.parseInt(value)
+            //FIX ME: Maybe rename this type to integer and create float
+            //type as well?
+            upcast: (spec, value) => value.indexOf('.') >= 0 ? Number.parseFloat(value) : Number.parseInt(value)
         };
 
 

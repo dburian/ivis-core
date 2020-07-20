@@ -27,7 +27,6 @@ const defaultRefreshRate = 45;
 const minRefreshRate = 5;
 
 
-//TODO: fill isRequired & optional
 class RecordedAnimation extends Component {
     static propTypes = {
         dataSources: PropTypes.object.isRequired,

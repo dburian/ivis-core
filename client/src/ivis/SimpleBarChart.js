@@ -90,7 +90,6 @@ export class SimpleBarChart extends Component {
 
         const isH = this.props.isHorizontal;
 
-        //TODO: only ever needed is the toString
         function Point(realX, realY) {
             this.realX = realX;
             this.realY = realY;
