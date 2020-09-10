@@ -122,15 +122,38 @@ class GenericDataSource {
         this.history = [];
         this.kfBuffer = [];
         this.intp.clearArgs();
+        this.lastShiftNull = true;
+        this.kfPillow = 0;
     }
 
     shiftTo(ts) {
-        if (this.kfBuffer.length < this.conf.interpolation.arity) return null;
+        let minKfCount = this.conf.interpolation.arity;
+
+        if (this.lastShiftNull) {
+            minKfCount += this.kfPillow;
+        }
+
+        const result = this._shiftTo(ts, minKfCount);
+
+        if (!this.lastShiftNull && result === null) {
+            this.kfPillow += 1;
+        }
+        this.lastShiftNull = result === null;
+
+        return result;
+    }
+
+    _shiftTo(ts, minKfCount) {
+        if (this.kfBuffer.length < minKfCount) return null;
 
         if (this.conf.withHistory) {
             const historyLastTs = this.history.length > 0 ? this.history[this.history.length - 1].ts : -1;
             const kfsToHistory = this.kfBuffer.filter(kf => kf.ts < ts && kf.ts > historyLastTs);
             this.history.push(...kfsToHistory);
+
+            const minTs = this.dataAccess.getIntervalAbsolute().from.valueOf();
+            const newHistoryStartIdx = this.history.findIndex(kf => kf.ts >= minTs);
+            this.history.splice(0, newHistoryStartIdx);
         }
 
         const intpArity = this.conf.interpolation.arity;
@@ -164,23 +187,31 @@ class GenericDataSource {
 class TimeSeriesDataSource extends GenericDataSource{
     constructor(config, dataAccess) {
         super({...config, withHistory: true}, dataAccess);
+
+        this.lastGenDataRev = [];
     }
 
     shiftTo(ts) {
-        const history = super.shiftTo(ts);
-        if (history === null) return null;
+        const genericData = super.shiftTo(ts);
+        if (genericData === null) return null;
 
         const tsToMoment = (kf) => ({ts: moment(kf.ts), data: kf.data});
 
-        const mainStartTs = this.dataAccess.getIntervalAbsolute().from.valueOf();
-        const mainStartIdx = history.findIndex(kf => kf.ts > mainStartTs);
-
         const data = {
-            main: history.slice(mainStartIdx).map(tsToMoment),
+            main: genericData.map(tsToMoment),
         };
 
-        if (mainStartIdx > 0) data.prev = tsToMoment(history[mainStartIdx - 1]);
+        const mainStartTs = this.dataAccess.getIntervalAbsolute().from.valueOf();
+        const prevIdx = this.lastGenDataRev.findIndex(kf => kf.ts < mainStartTs);
 
+        if (prevIdx > -1) {
+            data.prev = tsToMoment(this.lastGenDataRev[prevIdx]);
+            this.lastGenDataRev = [this.lastGenDataRev[prevIdx], ...genericData];
+        } else {
+            this.lastGenDataRev = genericData;
+        }
+
+        this.lastGenDataRev.reverse();
         return {[this.conf.sigSetCid]: data};
     }
 

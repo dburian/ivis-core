@@ -3,28 +3,29 @@ import React from "react";
 import moment from "moment";
 
 
-const AnimationStatusContext = React.createContext(null);
-const AnimationControlContext = React.createContext(null);
-const AnimationDataContext = React.createContext(null);
+export const AnimationStatusContext = React.createContext(null);
+export const AnimationControlContext = React.createContext(null);
+export const AnimationDataContext = React.createContext(null);
+export const AnimationDataAccessContext = React.createContext(null);
 
-const withAnimationControl = createComponentMixin({
+export const withAnimationControl = createComponentMixin({
     contexts: [
         {context: AnimationStatusContext, propName: 'animationStatus'},
         {context: AnimationControlContext, propName: 'animationControl'}
     ]
 });
 
-const withAnimationStatus = createComponentMixin({
+export const withAnimationStatus = createComponentMixin({
     contexts: [
         {context: AnimationStatusContext, propName: 'animationStatus'},
     ]
 });
 
-const withAnimationData = createComponentMixin({
+export const withAnimationData = createComponentMixin({
     contexts: [ {context: AnimationDataContext, propName: 'animationData'} ]
 });
 
-class SignalInterpolator {
+export class SignalInterpolator {
     constructor(signals, func, arity) {
         this.signals = signals;
         this.func = func;
@@ -84,15 +85,3 @@ class SignalInterpolator {
         this.hasCachedArgs = false;
     }
 }
-
-export {
-    withAnimationStatus,
-    withAnimationControl,
-    withAnimationData,
-
-    AnimationControlContext,
-    AnimationStatusContext,
-    AnimationDataContext,
-
-    SignalInterpolator,
-};

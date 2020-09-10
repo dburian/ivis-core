@@ -107,7 +107,7 @@ class GenericDataSource {
 
             let getAggStep = null;
             if (conf.withHistory) {
-                getAggStep = () => this.dataAccess.getIntervalAbsolute().aggregationInterval;
+                getAggStep = () => config.aggregationInterval || this.dataAccess.getIntervalAbsolute().aggregationInterval;
             } else {
                 getAggStep = () => this.dataAccess.getPlaybackSpeedFactorBasedAggStep(conf.minFramesPerKeyframe);
             }

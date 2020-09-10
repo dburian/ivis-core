@@ -1,6 +1,5 @@
 'use strict';
 
-const log = require('../../../server/lib/log');
 const si = require('systeminformation');
 
 class ServerMonitor {
@@ -30,7 +29,7 @@ class ServerMonitor {
         this.refreshStatsBound = this.refreshStats.bind(this);
     }
 
-    async getCPULoad() {
+    static async getCPULoad() {
         const loadInfo = await si.currentLoad();
 
         return {
@@ -39,7 +38,8 @@ class ServerMonitor {
             system: loadInfo.currentload_system,
         };
     }
-    async getMemStatus() {
+
+    static async getMemStatus() {
         const memInfo = await si.mem();
 
         return {
@@ -48,7 +48,8 @@ class ServerMonitor {
             used: memInfo.used,
         };
     }
-    async getDiskLoad() {
+
+    static async getDiskLoad() {
         const diskStat = await si.disksIO();
 
         return {
@@ -59,11 +60,11 @@ class ServerMonitor {
     }
 
     async refreshStats() {
-        const cpu_load =  await this.getCPULoad();
+        const cpu_load = await ServerMonitor.getCPULoad();
 
-        const mem_status = await this.getMemStatus();
+        const mem_status = await ServerMonitor.getMemStatus();
 
-        const disk_load = await this.getDiskLoad();
+        const disk_load = await ServerMonitor.getDiskLoad();
 
         this.updateStatus({data: { cpu_load, mem_status, disk_load}});
     }
@@ -93,6 +94,7 @@ class ServerMonitor {
         this.updateStatus({isPlaying: true});
         this.startMonitoring();
     }
+
     pause() {
         this.updateStatus({isPlaying: false});
         this.stopMonitoring();
