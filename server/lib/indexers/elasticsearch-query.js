@@ -28,8 +28,7 @@ function getElsInterval(duration) {
     const units = ['ms', 's', 'm', 'h'];
     for (const unit of units) {
         if (duration.get(unit) !== 0) {
-            //Rounding needed as duration.as(<unit>) returns float. This is
-            //sometimes true even for ms.
+            //Rounding needed as duration.as(<unit>) returns float.
             //See the output of moment.duration('PT4.087').as('ms').
             return Math.round(duration.as(unit)) + unit;
         }

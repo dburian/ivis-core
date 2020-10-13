@@ -85,3 +85,59 @@ export class SignalInterpolator {
         this.hasCachedArgs = false;
     }
 }
+
+export class SigSetInterpolator {
+    constructor(signalCids, aggs, intp) {
+        this.signalCids = signalCids;
+        this.aggs = aggs;
+        this.func = intp.func;
+        this.arity = intp.arity;
+
+        this.clearArgs();
+    }
+
+    rebuildArgs(keyframes) {
+        this.clearArgs();
+
+        if (keyframes.length !== this.arity) return;
+        const getArgsForAgg = (sigCid, agg) => keyframes.map(kf => kf.data[sigCid][agg]);
+
+        for (const sigCid of this.signalCids) {
+            const signalArgs = {};
+            for (const agg of this.aggs) {
+                signalArgs[agg] = getArgsForAgg(sigCid, agg);
+            }
+
+            this.dataArgs[sigCid] = signalArgs;
+        }
+
+        this.tsArgs = keyframes.map(kf => moment.isMoment(kf.ts) ? kf.ts.valueOf() : kf.ts);
+        this.hasCachedArgs = true;
+    }
+
+    interpolate(ts) {
+        let forceNull = !this.hasCachedArgs ||
+            this.tsArgs[0] > ts || this.tsArgs[this.tsArgs.length - 1] < ts;
+
+        const results = {};
+        const interpolateAgg = (sigCid, agg) => forceNull ? null : this.func(this.tsArgs, this.dataArgs[sigCid][agg], ts);
+
+        for (const sigCid of this.signalCids) {
+            const sigResults = {};
+            for (const agg of this.aggs) {
+                sigResults[agg] = interpolateAgg(sigCid, agg);
+            }
+
+            results[sigCid] = sigResults;
+        }
+
+        return results;
+    }
+
+    clearArgs() {
+        this.dataArgs = {};
+        this.tsArgs = [];
+
+        this.hasCachedArgs = false;
+    }
+}

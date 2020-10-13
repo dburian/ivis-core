@@ -2,7 +2,10 @@ import React, {Component} from "react";
 import PropTypes from "prop-types";
 
 import {withComponentMixins} from "../lib/decorator-helpers";
-import {withAnimationData, withAnimationStatus} from "../lib/animation-helpers";
+import {
+    withAnimationData,
+    withAnimationStatus,
+} from "../lib/animation-helpers";
 import styles from "./AnimationCommon.scss";
 
 function animated(VisualizationComp) {
