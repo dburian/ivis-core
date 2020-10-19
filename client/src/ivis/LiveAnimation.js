@@ -6,7 +6,8 @@ import {
     AnimationStatusContext,
     AnimationControlContext,
     AnimationDataContext,
-    SignalInterpolator
+    SignalInterpolator,
+    SigSetInterpolator
 } from "../lib/animation-helpers";
 import {withAsyncErrorHandler} from "../lib/error-handling";
 import {withComponentMixins} from "../lib/decorator-helpers";
@@ -101,33 +102,59 @@ class LiveAnimation extends Component {
 
 class GenericDataSource {
     constructor(config, dataAccess) {
-        this.conf = {...config};
+        this.conf = {
+            formatData: config.formatData || null,
+            history: config.history || null,
+            intpArity: config.interpolation.arity,
+            signalAggs: config.simulatedSignalAggs || ['avg'],
+        };
+
         this.dataAccess = dataAccess;
 
-        this.intp = new SignalInterpolator(
-            this.conf.signals,
-            this.conf.interpolation.func,
-            this.conf.interpolation.arity
-        );
+        this.sigSets = [];
+        for (const sigSetConf of config.simulatedSigSets) {
+            const signalCids = sigSetConf.simulatedSignalCids;
+            this.sigSets.push({
+                cid: sigSetConf.cid,
+                signalCids,
+                intp: new SigSetInterpolator(signalCids, this.conf.signalAggs, config.interpolation),
+            });
+        }
 
         this.clear();
     }
 
     addKeyframe(kf) {
         const data = this.conf.formatData ? this.conf.formatData(kf.data) : kf.data;
-        this.kfBuffer.push({ts: kf.ts, data});
+
+        this.buffer.push({ts: kf.ts, data});
     }
 
     clear() {
+        for (const sigSet of this.sigSets) {
+            sigSet.intp.clearArgs();
+        }
+
+        this.buffer = [];
         this.history = [];
-        this.kfBuffer = [];
-        this.intp.clearArgs();
+
+        this.tss = [];
         this.lastShiftNull = true;
         this.kfPillow = 0;
     }
 
+    getEmptyData() {
+        const emptyData = {};
+        for (const sigSet of this.sigSets) {
+            if (this.conf.history) emptyData[sigSet.cid] = [];
+            else emptyData[sigSet.cid] = sigSet.intp.interpolate(-1);
+        }
+
+        return emptyData;
+    }
+
     shiftTo(ts) {
-        let minKfCount = this.conf.interpolation.arity;
+        let minKfCount = this.conf.intpArity;
 
         if (this.lastShiftNull) {
             minKfCount += this.kfPillow;
@@ -144,81 +171,131 @@ class GenericDataSource {
     }
 
     _shiftTo(ts, minKfCount) {
-        if (this.kfBuffer.length < minKfCount) return null;
+        if (this.buffer.length < minKfCount) return null;
 
-        if (this.conf.withHistory) {
+        if (this.conf.history) {
             const historyLastTs = this.history.length > 0 ? this.history[this.history.length - 1].ts : -1;
-            const kfsToHistory = this.kfBuffer.filter(kf => kf.ts < ts && kf.ts > historyLastTs);
-            this.history.push(...kfsToHistory);
+            let i = this.buffer.find(kf => kf.ts > historyLastTs);
+            while (this.buffer.length > i && this.buffer[i].ts < ts) {
+                this.history.push(this.buffer[i]);
+                i++;
+            }
 
-            const minTs = this.dataAccess.getIntervalAbsolute().from.valueOf();
+            const minTs = ts - this.conf.history;
             const newHistoryStartIdx = this.history.findIndex(kf => kf.ts >= minTs);
             this.history.splice(0, newHistoryStartIdx);
         }
 
-        const intpArity = this.conf.interpolation.arity;
+        const intpArity = this.conf.intpArity;
         let kfsChanged = false;
-        while (this.kfBuffer[intpArity - 1].ts < ts && this.kfBuffer.length > intpArity) {
+        while (this.buffer[intpArity - 1].ts < ts && this.buffer.length > intpArity) {
             const delCount = Math.min(
                 intpArity - 1,
-                this.kfBuffer.length - intpArity
+                this.buffer.length - intpArity
             );
             kfsChanged = true;
 
-            this.kfBuffer.splice(0, delCount);
+            this.buffer.splice(0, delCount);
         }
 
-        if (this.kfBuffer[intpArity - 1].ts < ts) return null;
+        if (this.buffer[intpArity - 1].ts < ts) return null;
 
-        if (kfsChanged || !this.intp.hasCachedArgs) this.intp.rebuildArgs(this.kfBuffer);
+        const data = {};
+        const getSigSetKf = (cid, kf) => ({ts: kf.ts, data: kf.data[cid]});
+        for (const sigSet of this.sigSets) {
+            if (kfsChanged || !sigSet.intp.hasCachedArgs) {
+                const sigSetBuffer = [];
+                for (let i = 0; i < intpArity; i++) {
+                    sigSetBuffer.push(getSigSetKf(sigSet.cid, this.buffer[i]));
+                }
 
-        if (this.conf.withHistory) {
-            return [...this.history, {ts: ts, data: this.intp.interpolate(ts)}];
-        } else {
-            return this.intp.interpolate(ts);
+                sigSet.intp.rebuildArgs(sigSetBuffer);
+            }
+
+            const currentKf = sigSet.intp.interpolate(ts);
+            if (this.conf.history) {
+                const sigSetHistory = this.history.map(kf => getSigSetKf(sigSet.cid, kf));
+                sigSetHistory.push(currentKf);
+                data[sigSet.cid] = sigSetHistory;
+            } else {
+                data[sigSet.cid] = currentKf;
+            }
         }
-    }
 
-    getEmptyData() {
-        return this.conf.withHistory ? [] : this.intp.interpolate(-1);
+        return data;
     }
 }
 
 class TimeSeriesDataSource extends GenericDataSource{
     constructor(config, dataAccess) {
-        super({...config, withHistory: true}, dataAccess);
+        super({...config}, dataAccess);
 
         this.lastGenDataRev = [];
     }
 
     shiftTo(ts) {
+        const prevs = this._getPrevs();
+
+        const absIntv = this.dataAccess.getIntervalAbsolute();
+        this.conf.history = absIntv.to.valueOf() - absIntv.from.valueOf();
+
         const genericData = super.shiftTo(ts);
+
         if (genericData === null) return null;
 
-        const tsToMoment = (kf) => ({ts: moment(kf.ts), data: kf.data});
-
-        const data = {
-            main: genericData.map(tsToMoment),
+        const tsToMoment = (kf) => {
+            kf.ts = moment(kf.ts);
+            return kf;
         };
 
-        const mainStartTs = this.dataAccess.getIntervalAbsolute().from.valueOf();
-        const prevIdx = this.lastGenDataRev.findIndex(kf => kf.ts < mainStartTs);
+        const data = {};
+        for (const sigSet of this.sigSets) {
+            data[sigSet.cid] = {
+                main: genericData[sigSet.cid].map(tsToMoment),
+            };
 
-        if (prevIdx > -1) {
-            data.prev = tsToMoment(this.lastGenDataRev[prevIdx]);
-            this.lastGenDataRev = [this.lastGenDataRev[prevIdx], ...genericData];
-        } else {
-            this.lastGenDataRev = genericData;
+            if (prevs) {
+                data[sigSet.cid].prev = prevs[sigSet.cid];
+            }
         }
 
-        this.lastGenDataRev.reverse();
-        return {[this.conf.sigSetCid]: data};
+        return data;
     }
 
     getEmptyData() {
-        return {
-            [this.conf.sigSetCid]: { main: [] }
+        const emptyData = {};
+        for (const sigSet of this.sigSets) {
+            emptyData[sigSet.cid] = { main: [] };
+        }
+
+        return emptyData;
+    }
+
+    _getPrevs(ts) {
+        const findPrevIdx = arr => {
+            let i = 0;
+            while (i < arr.length && arr[i].ts <= ts) i++;
+
+            if (i === arr.length || i === 0) return null;
+            else return i-1;
         };
+
+        let prevIdx = findPrevIdx(this.history);
+        let arr = this.history;
+        if (prevIdx === null) {
+            prevIdx = findPrevIdx(this.buffer);
+            arr = this.buffer;
+        }
+
+        let prevs = null;
+        if (prevIdx !== null) {
+            prevs = {};
+            for (const sigSet of this.sigSets) {
+                prevs[sigSet.cid] = arr[prevIdx].data[sigSet.cid];
+            }
+        }
+
+        return prevs;
     }
 }
 
