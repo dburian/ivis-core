@@ -33,9 +33,9 @@ class ServerMonitor {
         const loadInfo = await si.currentLoad();
 
         return {
-            load: loadInfo.currentload,
-            user: loadInfo.currentload_user,
-            system: loadInfo.currentload_system,
+            current: {avg: loadInfo.currentload},
+            user: {avg: loadInfo.currentload_user},
+            system: {avg: loadInfo.currentload_system},
         };
     }
 
@@ -43,9 +43,9 @@ class ServerMonitor {
         const memInfo = await si.mem();
 
         return {
-            total: memInfo.total,
-            free: memInfo.free,
-            used: memInfo.used,
+            total: {avg: memInfo.total},
+            free: {avg: memInfo.free},
+            used: {avg: memInfo.used},
         };
     }
 
@@ -53,9 +53,9 @@ class ServerMonitor {
         const diskStat = await si.disksIO();
 
         return {
-            readIOPerSec: diskStat.rIO_sec,
-            writeIOPerSec: diskStat.wIO_sec,
-            totalIOPerSec: diskStat.tIO_sec,
+            readIOPerSec: {avg: diskStat.rIO_sec},
+            writeIOPerSec: {avg: diskStat.wIO_sec},
+            totalIOPerSec: {avg: diskStat.tIO_sec},
         };
     }
 

@@ -136,7 +136,7 @@ class StaticPieChart extends Component {
             if (typeof datum.value === "number") return datum;
             else {
                 let resValue = null;
-                if (datum.dataSource && datum.signal) resValue = this.props.data[datum.dataSource][datum.signal];
+                if (datum.sigSetCid && datum.signalCid) resValue = this.props.data[datum.sigSetCid][datum.signalCid];
                 if (datum.agg && resValue) resValue = resValue[datum.agg];
 
                 return resValue;

@@ -123,7 +123,7 @@ export class LineChartBase extends Component {
 
     static propTypes = {
         config: PropTypes.object.isRequired,
-        data: PropTypes.array,
+        data: PropTypes.object,
         contentComponent: PropTypes.func,
         contentRender: PropTypes.func,
         onClick: PropTypes.func,

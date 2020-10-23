@@ -25,67 +25,6 @@ export const withAnimationData = createComponentMixin({
     contexts: [ {context: AnimationDataContext, propName: 'animationData'} ]
 });
 
-export class SignalInterpolator {
-    constructor(signals, func, arity) {
-        this.signals = signals;
-        this.func = func;
-        this.arity = arity;
-        this.signalArgs = {};
-        this.tsArgs = [];
-
-        this.hasCachedArgs = false;
-    }
-
-    rebuildArgs(keyframes) {
-        this.signalArgs = {};
-        this.tsArgs = [];
-        this.hasCachedArgs = false;
-
-        if (keyframes.length < this.arity) return;
-        const kfsWithArgs = keyframes.slice(0, this.arity);
-
-        const getArgsForAgg = (sigCid, agg) => kfsWithArgs.map(kf => kf.data[sigCid][agg]);
-
-        for (const sigCid of Object.keys(this.signals)) {
-            const sigAggs = this.signals[sigCid];
-
-            const args = {};
-            for (const agg of sigAggs) {
-                args[agg] = getArgsForAgg(sigCid, agg);
-            }
-
-            this.signalArgs[sigCid] = args;
-        }
-
-        this.tsArgs = kfsWithArgs.map(kf => moment.isMoment(kf.ts) ? kf.ts.valueOf() : kf.ts);
-        this.hasCachedArgs = true;
-    }
-
-    interpolate(ts) {
-        let forceNull = !this.hasCachedArgs || this.tsArgs[0] > ts || this.tsArgs[this.tsArgs.length - 1] < ts;
-
-        const results = {};
-        const interpolateAgg = (sigCid, agg) => forceNull ? null : this.func(this.tsArgs, this.signalArgs[sigCid][agg], ts);
-
-        for (const sigCid of Object.keys(this.signals)) {
-            const sigAggs = this.signals[sigCid];
-
-            const sigResults = {};
-            for (const agg of sigAggs) {
-                sigResults[agg] = interpolateAgg(sigCid, agg);
-            }
-
-            results[sigCid] = sigResults;
-        }
-
-        return results;
-    }
-
-    clearArgs() {
-        this.hasCachedArgs = false;
-    }
-}
-
 export class SigSetInterpolator {
     constructor(signalCids, aggs, intp) {
         this.signalCids = signalCids;
@@ -96,11 +35,19 @@ export class SigSetInterpolator {
         this.clearArgs();
     }
 
-    rebuildArgs(keyframes) {
+    rebuildArgs(keyframes, startIdx = 0) {
         this.clearArgs();
+        const adjArity = startIdx + this.arity;
 
-        if (keyframes.length !== this.arity) return;
-        const getArgsForAgg = (sigCid, agg) => keyframes.map(kf => kf.data[sigCid][agg]);
+        if (keyframes.length < adjArity) return;
+        const getArgsForAgg = (sigCid, agg) => {
+            const args = [];
+            for (let i = startIdx; i < adjArity; i++) {
+                args.push(keyframes[i].data[sigCid][agg]);
+            }
+
+            return args;
+        };
 
         for (const sigCid of this.signalCids) {
             const signalArgs = {};
@@ -111,7 +58,12 @@ export class SigSetInterpolator {
             this.dataArgs[sigCid] = signalArgs;
         }
 
-        this.tsArgs = keyframes.map(kf => moment.isMoment(kf.ts) ? kf.ts.valueOf() : kf.ts);
+        this.tsArgs = [];
+        for (let i = startIdx; i < adjArity; i++) {
+            const ts = keyframes[i].ts;
+            this.tsArgs.push(moment.isMoment(ts) ? ts.valueOf() : ts);
+        }
+
         this.hasCachedArgs = true;
     }
 

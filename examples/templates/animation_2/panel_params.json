@@ -1,0 +1,250 @@
+{
+    "animationConfig": {
+        "refreshRate": "50",
+        "initialStatus": {
+            "positionISO": "2020-07-19T10:50:32Z",
+            "playbackSpeedFactor": "50"
+        },
+        "controls": {
+            "playPause": {
+                "visible": true,
+                "enabled": true
+            },
+            "stop": {
+                "visible": true,
+                "enabled": true
+            },
+            "jumpForward": {
+                "visible": true,
+                "enabled": true,
+                "jumpFactor": ""
+            },
+            "jumpBackward": {
+                "visible": true,
+                "enabled": true,
+                "jumpFactor": ""
+            },
+            "changeSpeed": {
+                "visible": true,
+                "enabled": true,
+                "steps": []
+            },
+            "timeline": {
+                "visible": true,
+                "enabled": true,
+                "positionFormatString": ""
+            }
+        }
+    },
+    "pageHeader": "COVID-19 in Italy",
+    "pageDesc": "Italy is one of the countries that has been hit the hardest with the COVID-19 pandemic.  The following visualizations should provide you with basic overview of how the pandemic progressed throughout the country.\\n\\nThere are several sections in this panel. After the introduction you will see a 'Chart types' section, that explains all of the visualizations used. Following the 'Chart types' section, there is the 'Data sets' section, where you can find the animation controls and the visualizations in the context of various districts in Italy.",
+    "lineChart": {
+        "sigSets": [
+            {
+                "cid": "it",
+                "tsSigCid": "ts",
+                "signals": [
+                    {
+                        "label": "Italy negative",
+                        "color": {
+                            "r": 145,
+                            "g": 76,
+                            "b": 84,
+                            "a": 1
+                        },
+                        "cid": "total_negative"
+                    },
+                    {
+                        "label": "Italy positive",
+                        "color": {
+                            "r": 208,
+                            "g": 2,
+                            "b": 27,
+                            "a": 1
+                        },
+                        "cid": "total_confirmed"
+                    }
+                ]
+            },
+            {
+                "cid": "it_25",
+                "tsSigCid": "ts",
+                "signals": [
+                    {
+                        "label": "Lombardy negative",
+                        "color": {
+                            "r": 64,
+                            "g": 89,
+                            "b": 119,
+                            "a": 1
+                        },
+                        "cid": "total_negative"
+                    },
+                    {
+                        "label": "Lombardy positive",
+                        "color": {
+                            "r": 74,
+                            "g": 144,
+                            "b": 226,
+                            "a": 1
+                        },
+                        "cid": "total_confirmed"
+                    }
+                ]
+            },
+            {
+                "cid": "it_21",
+                "tsSigCid": "ts",
+                "signals": [
+                    {
+                        "label": "Piedmont negative",
+                        "color": {
+                            "r": 96,
+                            "g": 126,
+                            "b": 62,
+                            "a": 1
+                        },
+                        "cid": "total_negative"
+                    },
+                    {
+                        "label": "Piedmont positive",
+                        "color": {
+                            "r": 126,
+                            "g": 202,
+                            "b": 37,
+                            "a": 1
+                        },
+                        "cid": "total_confirmed"
+                    }
+                ]
+            }
+        ]
+    },
+    "pieChart": {
+        "chartLabel": "Positive to negative ratio",
+        "chartDesc": "Pie charts displaying the COVID test results in Italy's districts.",
+        "sectors": [
+            {
+                "id": "negative",
+                "label": "Negative",
+                "desc": "Portion of test that came out negative.",
+                "color": {
+                    "r": 208,
+                    "g": 2,
+                    "b": 27,
+                    "a": 1
+                }
+            },
+            {
+                "id": "positive",
+                "label": "Positive",
+                "desc": "Portion of test that came out positive.",
+                "color": {
+                    "r": 74,
+                    "g": 144,
+                    "b": 226,
+                    "a": 1
+                }
+            }
+        ],
+        "dataSets": [
+            {
+                "name": "Italy",
+                "sigSetCid": "it",
+                "tsSigCid": "ts",
+                "sectors": [
+                    {
+                        "cid": "total_negative",
+                        "sectorId": "negative"
+                    },
+                    {
+                        "cid": "total_confirmed",
+                        "sectorId": "positive"
+                    }
+                ]
+            },
+            {
+                "name": "Lombardy",
+                "sigSetCid": "it_25",
+                "tsSigCid": "ts",
+                "sectors": [
+                    {
+                        "cid": "total_negative",
+                        "sectorId": "negative"
+                    },
+                    {
+                        "cid": "total_confirmed",
+                        "sectorId": "positive"
+                    }
+                ]
+            },
+            {
+                "name": "Piedmont",
+                "sigSetCid": "it_21",
+                "tsSigCid": "ts",
+                "sectors": [
+                    {
+                        "cid": "total_negative",
+                        "sectorId": "negative"
+                    },
+                    {
+                        "cid": "total_confirmed",
+                        "sectorId": "positive"
+                    }
+                ]
+            }
+        ]
+    },
+    "svgChart": {
+        "sigSets": [
+            {
+                "cid": "it",
+                "tsSigCid": "ts",
+                "signals": [
+                    {
+                        "label": "Num. of tests in Italy",
+                        "color": {
+                            "r": 65,
+                            "g": 117,
+                            "b": 5,
+                            "a": 1
+                        },
+                        "cid": "total_tested"
+                    }
+                ]
+            },
+            {
+                "cid": "it_25",
+                "tsSigCid": "ts",
+                "signals": [
+                    {
+                        "label": "Num. of tests in Lombardy",
+                        "color": {
+                            "r": 201,
+                            "g": 149,
+                            "b": 62,
+                            "a": 1
+                        },
+                        "cid": "total_tested"
+                    }
+                ]
+            },
+            {
+                "cid": "it_21",
+                "tsSigCid": "ts",
+                "signals": [
+                    {
+                        "label": "Num. of tests in Piedmont",
+                        "color": {
+                            "r": 161,
+                            "g": 92,
+                            "b": 221,
+                            "a": 1
+                        },
+                        "cid": "total_tested"
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -18,8 +18,8 @@ import {
 import PropTypes from 'prop-types';
 import styles from './styles.scss';
 
-const lineChartDtSourcePrefix = 'linechart_';
-const barChartDtSourcePrefix = 'barchart_';
+const lineChartDtSourceKey = 'linechart_dt';
+const barChartDtSourceKey = 'barchart_dt';
 
 class PanelIntroduction extends Component {
     static propTypes = {
@@ -102,8 +102,8 @@ class BarChartSection extends Component {
                 label: dataSet.name,
                 colors: dataSet.categories.map(c => colors[c.categoryId]),
                 values: dataSet.categories.map(c => ({
-                    dataSource: barChartDtSourcePrefix + dataSet.sigSetCid,
-                    signal: c.cid,
+                    sigSetCid: dataSet.sigSetCid,
+                    signalCid: c.cid,
                     agg: 'avg'
                 })),
             };
@@ -130,6 +130,7 @@ class BarChartSection extends Component {
         return (
             <div className="px-1 text-center">
                 <AnimatedBarChart
+                    dataSourceKey={barChartDtSourceKey}
                     height={height}
                     padding={{
                         bottom: 30,
@@ -146,7 +147,7 @@ class BarChartSection extends Component {
                     withBarValues
 
                     valueFormatSpecifier={this.props.valueFormatSpecifier}
-                    />
+                />
 
                 <StaticLegend
                     structure={structure}
@@ -167,22 +168,16 @@ class LineChartSection extends Component {
     render() {
         const config = {
             yAxes: [{visible: true, belowMin: 0.1, aboveMax: 0.2}],
-            signalSets: this.props.config.dataSets,
+            signalSets: this.props.config.sigSets,
         };
 
         return (
             <div className="container-fluid">
                 <AnimatedLineChart
+                    dataSourceKey={lineChartDtSourceKey}
                     config={config}
                     height={500}
                     withTooltip
-                    animationDataFormatter={data => {
-                        const dtSrces = Object.keys(data)
-                            .filter(dtSrcKey => dtSrcKey.startsWith(lineChartDtSourcePrefix))
-                            .map(dtSrcKey => data[dtSrcKey]);
-
-                        return [Object.assign({}, ...dtSrces)];
-                    }}
                 />
             </div>
         );
@@ -192,52 +187,37 @@ class LineChartSection extends Component {
 @withPanelConfig
 export default class Panel extends Component {
     getAnimationConfig() {
-        const c = this.getPanelConfig(['animationConfig']);
-        const barChartDtSets = this.getPanelConfig(['barchart', 'dataSets']);
-
+        const ac = this.getPanelConfig(['animationConfig']);
         const dataSources = {};
-        for (const dtSet of barChartDtSets) {
-            const signals = {};
-            for (const sigCid of dtSet.categories.map(c => c.cid)) {
-                signals[sigCid] = ['avg'];
-            }
 
-            dataSources[barChartDtSourcePrefix + dtSet.sigSetCid] = {
-                type: 'generic',
-                interpolation: expensiveCubicInterpolation,
-                withHistory: false,
+        const barChartDtSets = this.getPanelConfig(['barchart', 'dataSets']);
+        dataSources[barChartDtSourceKey] = {
+            type: 'generic',
+            interpolation: expensiveCubicInterpolation,
 
-                sigSetCid: dtSet.sigSetCid,
-                signals,
+            sigSets: barChartDtSets.map(dtSet => ({
+                cid: dtSet.sigSetCid,
                 tsSigCid: dtSet.tsSigCid,
-            };
-        }
+                signals: dtSet.categories
+            })),
+        };
 
+        const lineChartSigSets  = this.getPanelConfig(['linechart', 'sigSets']);
+        dataSources[lineChartDtSourceKey] = {
+            type: 'timeSeries',
+            interpolation: cubicInterpolation,
 
-        const lineChartDtSets = this.getPanelConfig(['linechart', 'dataSets']);
-        for (const dtSet of lineChartDtSets) {
-            const signals = {};
-            for (const sigCid of dtSet.signals.map(s => s.cid)) {
-                signals[sigCid] = ['min', 'max', 'avg'];
-            }
-
-            dataSources[lineChartDtSourcePrefix + dtSet.cid] = {
-                type: 'timeSeries',
-                interpolation: cubicInterpolation,
-
-                sigSetCid: dtSet.cid,
-                tsSigCid: dtSet.tsSigCid,
-                signals,
-            }
+            signalAggs: ['min', 'max', 'avg'],
+            sigSets: lineChartSigSets,
         }
 
 
         return {
-            refreshRate: c.refreshRate,
-            initialStatus: c.initialStatus && {
-                isPlaying: !!c.initialStatus.isPlaying,
-                position: c.initialStatus.positionISO && moment.utc(c.initialStatus.positionISO).valueOf(),
-                playbackSpeedFactor: c.initialStatus.playbackSpeedFactor,
+            refreshRate: ac.refreshRate,
+            initialStatus: ac.initialStatus && {
+                isPlaying: !!ac.initialStatus.isPlaying,
+                position: ac.initialStatus.positionISO && moment.utc(ac.initialStatus.positionISO).valueOf(),
+                playbackSpeedFactor: ac.initialStatus.playbackSpeedFactor,
             },
             dataSources
         };

@@ -6,7 +6,6 @@ import {
     AnimationStatusContext,
     AnimationControlContext,
     AnimationDataContext,
-    SignalInterpolator,
     SigSetInterpolator
 } from "../lib/animation-helpers";
 import {withAsyncErrorHandler} from "../lib/error-handling";
@@ -106,14 +105,14 @@ class GenericDataSource {
             formatData: config.formatData || null,
             history: config.history || null,
             intpArity: config.interpolation.arity,
-            signalAggs: config.simulatedSignalAggs || ['avg'],
+            signalAggs: config.signalAggs || ['avg'],
         };
 
         this.dataAccess = dataAccess;
 
         this.sigSets = [];
-        for (const sigSetConf of config.simulatedSigSets) {
-            const signalCids = sigSetConf.simulatedSignalCids;
+        for (const sigSetConf of config.sigSets) {
+            const signalCids = sigSetConf.signalCids;
             this.sigSets.push({
                 cid: sigSetConf.cid,
                 signalCids,
@@ -175,8 +174,8 @@ class GenericDataSource {
 
         if (this.conf.history) {
             const historyLastTs = this.history.length > 0 ? this.history[this.history.length - 1].ts : -1;
-            let i = this.buffer.find(kf => kf.ts > historyLastTs);
-            while (this.buffer.length > i && this.buffer[i].ts < ts) {
+            let i = this.buffer.findIndex(kf => kf.ts > historyLastTs);
+            while (i >= 0 && this.buffer.length > i && this.buffer[i].ts < ts) {
                 this.history.push(this.buffer[i]);
                 i++;
             }
@@ -212,13 +211,13 @@ class GenericDataSource {
                 sigSet.intp.rebuildArgs(sigSetBuffer);
             }
 
-            const currentKf = sigSet.intp.interpolate(ts);
+            const currentData = sigSet.intp.interpolate(ts);
             if (this.conf.history) {
                 const sigSetHistory = this.history.map(kf => getSigSetKf(sigSet.cid, kf));
-                sigSetHistory.push(currentKf);
+                sigSetHistory.push({ts, data: currentData});
                 data[sigSet.cid] = sigSetHistory;
             } else {
-                data[sigSet.cid] = currentKf;
+                data[sigSet.cid] = currentData;
             }
         }
 

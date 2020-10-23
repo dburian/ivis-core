@@ -327,8 +327,10 @@ class Timeline extends Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (this.props.enabled && !prevProps.enabled) this.enable();
-        else if (prevProps.enabled && !this.props.enabled) this.disable();
+        if ((this.props.enabled && !prevProps.enabled) ||
+            (this.props.animationControl.seek && !prevProps.animationControl.seek)) this.enable();
+        else if ((prevProps.enabled && !this.props.enabled) ||
+                (prevProps.animationControl.seek && !this.props.animationControl.seek)) this.disable();
 
         const prevIntvAbs = this.getIntervalAbsolute(prevProps);
         if (this.state.axisRect !== prevState.axisRect ||
@@ -472,7 +474,7 @@ class Timeline extends Component {
             .domain([intv.from.toDate(), intv.to.toDate()])
             .range([this.state.axisRect.x, this.state.axisRect.x + this.state.axisRect.width]);
 
-        const tickCount = Math.floor((timeScale.range()[1] - timeScale.range()[0])/ 80);
+        const tickCount = Math.floor((timeScale.range()[1] - timeScale.range()[0])/ 100);
         const ticks = timeScale.ticks(tickCount);
         const tickFormat = timeScale.tickFormat();
 
@@ -545,7 +547,7 @@ class Timeline extends Component {
 
                 <text ref={node => this.nodeRefs.positionLabel = node}
                     className={styles.positionLabel + " " + (this.props.classNames.positionLabel || "")}
-                    y={this.state.axisRect && this.state.axisRect.y || 0} x={"50%"} dy={"-2em"}
+                    y={(this.state.axisRect && this.state.axisRect.y) || 0} x={"50%"} dy={"-1.7em"}
                     pointerEvents={"none"}
                     textAnchor={"middle"}
                 >
@@ -553,7 +555,7 @@ class Timeline extends Component {
                 </text>
                 <text ref={node => this.nodeRefs.hoverPositionLabel = node}
                     className={styles.hoverPositionLabel + " " + (this.props.classNames.hoverPositionLabel || "")}
-                    y={this.state.axisRect && this.state.axisRect.y || 0} x={"50%"} dy={"-2em"}
+                    y={(this.state.axisRect && this.state.axisRect.y) || 0} x={"50%"} dy={"-1.7em"}
                     pointerEvents={"none"}
                     textAnchor={"middle"}
                     style={{display:"none"}}
@@ -562,7 +564,7 @@ class Timeline extends Component {
                     className={styles.pointer + " " + (this.props.classNames.pointer || "")}
                     cx={percPosition} cy={"50%"}
                     style={{display: "none"}}
-                    r={this.state.axisRect && 2*this.state.axisRect.height/3 || 0}
+                    r={(this.state.axisRect && 2*this.state.axisRect.height/3) || 0}
                 />
             </svg>
         );

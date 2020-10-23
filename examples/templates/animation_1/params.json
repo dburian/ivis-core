@@ -197,7 +197,7 @@
         "cardinality": "1..1",
         "children": [
             {
-                "id": "dataSets",
+                "id": "sigSets",
                 "label": "Signal sets",
                 "type": "fieldset",
                 "cardinality": "1..n",

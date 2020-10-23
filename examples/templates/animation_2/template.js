@@ -23,9 +23,9 @@ import {
 import PropTypes from 'prop-types';
 import styles from './styles.scss';
 
-const pieChartDtSourcePrefix = 'piechart_';
-const lineChartDtSourcePrefix = 'lineChart_';
-const svgChartDtSourcePrefix = 'svgChart_';
+const pieChartDtSourceKey = 'piechart_dt';
+const lineChartDtSourceKey = 'linechart_dt';
+const svgChartDtSourceKey = 'svgchart_dt';
 
 class PanelIntroduction extends Component {
     static propTypes = {
@@ -60,23 +60,17 @@ class LineChartSection extends Component {
     render() {
         const config = {
             yAxes: [{visible: true, belowMin: 0.1, aboveMax: 0.2}],
-            signalSets: this.props.config.dataSets
+            signalSets: this.props.config.sigSets
         };
 
 
         return (
             <div className="container-fluid">
                 <AnimatedLineChart
+                    dataSourceKey={lineChartDtSourceKey}
                     config={config}
                     height={500}
                     withTooltip
-                    animationDataFormatter={data => {
-                        const dtSrces = Object.keys(data)
-                            .filter(dtSrcKey => dtSrcKey.startsWith(lineChartDtSourcePrefix))
-                            .map(dtSrcKey => data[dtSrcKey]);
-
-                        return [Object.assign({}, ...dtSrces)];
-                    }}
                 />
             </div>
         );
@@ -134,8 +128,8 @@ class PieChartsSection extends Component {
                 arcs.push({
                     color: colors[sector.sectorId],
                     label: labels[sector.sectorId],
-                    dataSource: pieChartDtSourcePrefix + dtSet.sigSetCid,
-                    signal: sector.cid,
+                    sigSetCid: dtSet.sigSetCid,
+                    signalCid: sector.cid,
                     agg: 'avg'
                 });
             }
@@ -175,6 +169,7 @@ class SinglePieChartSection extends Component {
             <div className="col-6">
                 <h4 className="text-center">{this.props.label}</h4>
                 <AnimatedPieChart
+                    dataSourceKey={pieChartDtSourceKey}
                     config={{arcs: this.props.arcs}}
                     height={150}
                     legendPosition={LegendPosition.BOTTOM}
@@ -245,8 +240,8 @@ class SVGChart extends Component {
         const height = this.props.height;
 
         const getCoordsFromLineConf = (lineConf) => (
-            data[lineConf.dataSource]
-                .map(kf => ({x: kf.ts, y: kf.data[lineConf.signal][lineConf.agg]}))
+            data[lineConf.sigSetCid]
+                .map(kf => ({x: kf.ts, y: kf.data[lineConf.signalCid][lineConf.agg]}))
                 .filter(({x, y}) => x !== null && y !== null)
         );
 
@@ -259,10 +254,11 @@ class SVGChart extends Component {
 
         if (yExtents.every(v => v === undefined)) {
             messageSel.text('No data.');
-            return;
+            yExtents = [0, 1];
+            xExtents = [0, 1];
+        } else {
+            messageSel.text(null);
         }
-
-        messageSel.text(null);
 
 
         const yExtremesSpan = yExtents[1] - yExtents[0];
@@ -333,7 +329,7 @@ class SVGChart extends Component {
                 .attr('text-anchor', 'end')
                 .attr('transform', d => `rotate(45, ${x(d.x)}, ${y(d.y)})`)
                 .attr('opacity', scaleFactor > 2 ? 1 : 0)
-                .text(d => `y: ${d.y.toFixed(0)}, time: ${moment(d.x).format('YYYY/MM/DD HH:mm')}`)
+                .text(d => `y: ${d.y.toFixed(0)}, time: ${(new Date(d.x)).toLocaleString()}`)
             );
     }
 
@@ -373,18 +369,18 @@ class SVGChart extends Component {
 const AnimatedSVGChart = animated(SVGChart);
 class SVGChartSection extends Component {
     static propTypes = {
-        dataSets: PropTypes.array,
+        sigSets: PropTypes.array.isRequired,
     }
 
     getLines() {
         const lines = [];
-        for (const dtSet of this.props.dataSets) {
-            for (const signal of dtSet.signals) {
+        for (const sigSet of this.props.sigSets) {
+            for (const signal of sigSet.signals) {
                 lines.push({
                     color: signal.color,
                     label: signal.label,
-                    dataSource: svgChartDtSourcePrefix + dtSet.cid,
-                    signal: signal.cid,
+                    sigSetCid: sigSet.cid,
+                    signalCid: signal.cid,
                     agg: 'avg',
                 });
             }
@@ -396,6 +392,7 @@ class SVGChartSection extends Component {
     render() {
         return (
             <AnimatedSVGChart
+                dataSourceKey={svgChartDtSourceKey}
                 config={{lines: this.getLines()}}
                 height={500}
             />
@@ -410,58 +407,35 @@ export default class Panel extends Component {
         const pieChartDtSets = this.getPanelConfig(['pieChart', 'dataSets']);
 
         const dataSources = {};
-        for (const dtSet of pieChartDtSets) {
-            const signals = {};
-            for (const sigCid of dtSet.sectors.map(s => s.cid)) {
-                signals[sigCid] = ['avg'];
-            }
+        dataSources[pieChartDtSourceKey] = {
+            type: 'generic',
+            interpolation: linearInterpolation,
 
-            dataSources[pieChartDtSourcePrefix + dtSet.sigSetCid] = {
-                type: 'generic',
-                interpolation: linearInterpolation,
-                withHistory: false,
-
-                sigSetCid: dtSet.sigSetCid,
-                signals,
+            sigSets: pieChartDtSets.map(dtSet => ({
+                cid: dtSet.sigSetCid,
                 tsSigCid: dtSet.tsSigCid,
-            };
-        }
+                signals: dtSet.sectors,
+            })),
+        };
 
 
-        const lineChartDtSets = this.getPanelConfig(['lineChart', 'dataSets']);
-        for (const dtSet of lineChartDtSets) {
-            const signals = {};
-            for (const sigCid of dtSet.signals.map(s => s.cid)) {
-                signals[sigCid] = ['min', 'avg', 'max'];
-            }
+        const lineChartSigSets = this.getPanelConfig(['lineChart', 'sigSets']);
+        dataSources[lineChartDtSourceKey] = {
+            type: 'timeSeries',
+            interpolation: linearInterpolation,
 
-            dataSources[lineChartDtSourcePrefix + dtSet.cid] = {
-                type: 'timeSeries',
-                interpolation: linearInterpolation,
+            signalAggs: ['min', 'max', 'avg'],
+            sigSets: lineChartSigSets,
+        };
 
-                sigSetCid: dtSet.cid,
-                tsSigCid: dtSet.tsSigCid,
-                signals,
-            };
-        }
+        const svgChartSigSets = this.getPanelConfig(['svgChart', 'sigSets']);
+        dataSources[svgChartDtSourceKey] = {
+            type: 'generic',
+            history: 5000,
+            interpolation: linearInterpolation,
 
-        const svgChartDtSets = this.getPanelConfig(['svgChart', 'dataSets']);
-        for (const dtSet of svgChartDtSets) {
-            const signals = {};
-            for (const sigCid of dtSet.signals.map(s => s.cid)) {
-                signals[sigCid] = ['avg'];
-            }
-
-            dataSources[svgChartDtSourcePrefix + dtSet.cid] = {
-                type: 'generic',
-                withHistory: true,
-                interpolation: linearInterpolation,
-
-                sigSetCid: dtSet.cid,
-                tsSigCid: dtSet.tsSigCid,
-                signals
-            };
-        }
+            sigSets: svgChartSigSets,
+        };
 
         return {
             refreshRate: c.refreshRate,
@@ -524,7 +498,7 @@ export default class Panel extends Component {
                     />
                     <hr />
                     <SVGChartSection
-                        dataSets={this.getPanelConfig(['svgChart', 'dataSets'])}
+                        sigSets={this.getPanelConfig(['svgChart', 'sigSets'])}
                     />
                 </RecordedAnimation>
             </>

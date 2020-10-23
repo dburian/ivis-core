@@ -192,7 +192,7 @@ export class TimeBasedChartBase extends Component {
 
     static propTypes = {
         config: PropTypes.object.isRequired,
-        data: PropTypes.array,
+        data: PropTypes.object,
         contentComponent: PropTypes.func,
         contentRender: PropTypes.func,
         height: PropTypes.number.isRequired,
@@ -296,7 +296,7 @@ export class TimeBasedChartBase extends Component {
             let results = null;
 
             if (this.props.data) {
-                results = this.props.data;
+                results = [this.props.data];
             } else {
                 const queries = this.props.getQueries(this, this.getIntervalAbsolute(), this.props.config);
 
@@ -442,11 +442,11 @@ export class TimeBasedChartBase extends Component {
 
         if (renderStatus == RenderStatus.NO_DATA) {
             this.statusMsgSelection.text(t('No data.'));
-            //FIX ME: ugly solution, graphs need clear old data
+            //FIX ME: ugly solution, graphs need to clear old data
             select(this.graphContentNode).selectAll('g').attr("opacity", 0);
         } else if (renderStatus === RenderStatus.SUCCESS) {
             this.statusMsgSelection.text(null);
-            //FIX ME: ugly solution, graphs need clear old data
+            //FIX ME: ugly solution, graphs need to clear old data
             select(this.graphContentNode).selectAll('g').attr("opacity", 1);
         }
     }

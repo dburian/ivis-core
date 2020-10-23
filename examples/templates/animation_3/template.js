@@ -22,78 +22,33 @@ import PropTypes from "prop-types";
 const dtSrces = {
     lineChart_cpu: {
         type: 'timeSeries',
-        sigSetCid: 'lineChart_cpu',
-        signals: {
-            current_load: ['min', 'max', 'avg'],
-            user_load: ['min', 'max', 'avg'],
-            system_load: ['min', 'max', 'avg'],
-        },
+        sigSets: [{
+            cid: 'cpu_load',
+            signalCids: ['current', 'user', 'system']
+        }],
+
+        signalAggs: ['avg'],
         interpolation: linearInterpolation,
-        formatData: (data) => {
-            return {
-                current_load: {
-                    avg: data.cpu_load.load,
-                    min: data.cpu_load.load,
-                    max: data.cpu_load.load,
-                },
-                user_load: {
-                    avg: data.cpu_load.user,
-                    min: data.cpu_load.user,
-                    max: data.cpu_load.user,
-                },
-                system_load: {
-                    avg: data.cpu_load.system,
-                    min: data.cpu_load.system,
-                    max: data.cpu_load.system,
-                },
-            };
-        },
     },
     barChart_mem: {
         type: 'generic',
-        withHistory: false,
-        signals: {
-            free: ['avg'],
-            total: ['avg'],
-            used: ['avg'],
-        },
+        sigSets: [{
+            cid: 'mem_status',
+            signalCids: ['free', 'used', 'total']
+        }],
+        signalAggs: ['avg'],
+
         interpolation: linearInterpolation,
-        formatData: (data) => {
-            return {
-                free: {
-                    avg: data.mem_status.free,
-                },
-                used: {
-                    avg: data.mem_status.used,
-                },
-                total: {
-                    avg: data.mem_status.total,
-                },
-            };
-        }
     },
     svg_disk: {
         type: 'generic',
-        withHistory: true,
-        signals: {
-            readIOPerSec: ['avg'],
-            writeIOPerSec: ['avg'],
-            totalIOPerSec: ['avg'],
-        },
+        history: 1000*60*1,
+        sigSets: [{
+            cid: 'disk_load',
+            signalCids: ['readIOPerSec', 'writeIOPerSec', 'totalIOPerSec'],
+        }],
+        signalAggs: ['avg'],
         interpolation: cubicInterpolation,
-        formatData: (data) => {
-            return {
-                readIOPerSec: {
-                    avg: data.disk_load.readIOPerSec,
-                },
-                writeIOPerSec: {
-                    avg: data.disk_load.writeIOPerSec,
-                },
-                totalIOPerSec: {
-                    avg: data.disk_load.totalIOPerSec,
-                },
-            };
-        },
     }
 };
 
@@ -127,22 +82,22 @@ class CPU extends Component {
             yAxes: [{visible: true, belowMin: 0.1, aboveMax: 0.1}],
             signalSets: [
                 {
-                    cid: dtSrces.lineChart_cpu.sigSetCid,
+                    cid: dtSrces.lineChart_cpu.sigSets[0].cid,
                     signals: [
                         {
                             label: 'Current load',
                             color: this.props.currentLoadColor,
-                            cid: 'current_load',
+                            cid: dtSrces.lineChart_cpu.sigSets[0].signalCids[0],
                         },
                         {
                             label: 'User load',
                             color: this.props.userLoadColor,
-                            cid: 'user_load',
+                            cid: dtSrces.lineChart_cpu.sigSets[0].signalCids[1],
                         },
                         {
                             label: 'System load',
                             color: this.props.systemLoadColor,
-                            cid: 'system_load',
+                            cid: dtSrces.lineChart_cpu.sigSets[0].signalCids[1],
                         }
                     ]
                 }
@@ -152,10 +107,10 @@ class CPU extends Component {
         return (
             <Frame name={"CPU load"}>
                 <AnimatedLineChart
+                    dataSourceKey={'lineChart_cpu'}
                     config={config}
                     height={300}
                     withBrush={false}
-                    animationDataFormatter={(data) => [data.lineChart_cpu]}
                 />
             </Frame>
         );
@@ -182,8 +137,8 @@ class Memory extends Component {
                     colors: [this.props.totalMemoryColor],
                     values: [
                         {
-                            dataSource: 'barChart_mem',
-                            signal: 'total',
+                            sigSetCid: dtSrces.barChart_mem.sigSets[0].cid,
+                            signalCid: dtSrces.barChart_mem.sigSets[0].signalCids[0],
                             agg: 'avg',
                         }
                     ]
@@ -193,8 +148,8 @@ class Memory extends Component {
                     colors: [this.props.usedMemoryColor],
                     values: [
                         {
-                            dataSource: 'barChart_mem',
-                            signal: 'used',
+                            sigSetCid: dtSrces.barChart_mem.sigSets[0].cid,
+                            signalCid: dtSrces.barChart_mem.sigSets[0].signalCids[1],
                             agg: 'avg',
                         }
                     ]
@@ -204,8 +159,8 @@ class Memory extends Component {
                     colors: [this.props.freeMemoryColor],
                     values: [
                         {
-                            dataSource: 'barChart_mem',
-                            signal: 'free',
+                            sigSetCid: dtSrces.barChart_mem.sigSets[0].cid,
+                            signalCid: dtSrces.barChart_mem.sigSets[0].signalCids[2],
                             agg: 'avg',
                         }
                     ]
@@ -216,6 +171,7 @@ class Memory extends Component {
         return (
             <Frame name={"Memory"}>
                 <AnimatedBarChart
+                    dataSourceKey={'barChart_mem'}
                     config={config}
                     height={150}
                     groupPadding={0.001}
@@ -290,8 +246,8 @@ class SVGChart extends Component {
         const height = this.props.height;
 
         const getCoordsFromLineConf = (lineConf) => (
-            data[lineConf.dataSource]
-                .map(kf => ({x: kf.ts, y: kf.data[lineConf.signal][lineConf.agg]}))
+            data[lineConf.sigSetCid]
+                .map(kf => ({x: kf.ts, y: kf.data[lineConf.signalCid][lineConf.agg]}))
                 .filter(({x, y}) => x !== null && y !== null)
         );
 
@@ -304,10 +260,11 @@ class SVGChart extends Component {
 
         if (yExtents.every(v => v === undefined)) {
             messageSel.text('No data.');
-            return;
+            yExtents = [0, 1];
+            xExtents = [0, 1];
+        } else {
+            messageSel.text(null);
         }
-
-        messageSel.text(null);
 
 
         const yExtremesSpan = yExtents[1] - yExtents[0];
@@ -429,22 +386,22 @@ class Disk extends Component {
                 {
                     color: this.props.diskReadColor,
                     label: 'Read IO operations per sec.',
-                    dataSource: 'svg_disk',
-                    signal: 'readIOPerSec',
+                    sigSetCid: dtSrces.svg_disk.sigSets[0].cid,
+                    signalCid: dtSrces.svg_disk.sigSets[0].signalCids[0],
                     agg: 'avg',
                 },
                 {
                     color: this.props.diskWriteColor,
                     label: 'Write IO operations per sec.',
-                    dataSource: 'svg_disk',
-                    signal: 'writeIOPerSec',
+                    sigSetCid: dtSrces.svg_disk.sigSets[0].cid,
+                    signalCid: dtSrces.svg_disk.sigSets[0].signalCids[1],
                     agg: 'avg',
                 },
                 {
                     color: this.props.diskTotalColor,
                     label: 'Total IO operations per sec.',
-                    dataSource: 'svg_disk',
-                    signal: 'totalIOPerSec',
+                    sigSetCid: dtSrces.svg_disk.sigSets[0].cid,
+                    signalCid: dtSrces.svg_disk.sigSets[0].signalCids[2],
                     agg: 'avg',
                 }
             ]
@@ -453,6 +410,7 @@ class Disk extends Component {
         return (
             <Frame name={"Disk load"}>
                 <AnimatedSVGChart
+                    dataSourceKey={'svg_disk'}
                     height={300}
                     config={config}
                 />

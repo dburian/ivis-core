@@ -131,7 +131,7 @@ export class SimpleBarChart extends Component {
             if (typeof value === "number") return value;
             else {
                 let resValue = null;
-                if (value.dataSource && value.signal) resValue = data[value.dataSource][value.signal];
+                if (value.sigSetCid && value.signalCid) resValue = data[value.sigSetCid][value.signalCid];
                 if (value.agg && resValue) resValue = resValue[value.agg];
 
                 return resValue;

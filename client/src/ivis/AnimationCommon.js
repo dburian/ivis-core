@@ -14,18 +14,22 @@ function animated(VisualizationComp) {
         static propTypes = {
             animationStatus: PropTypes.object.isRequired,
             animationData: PropTypes.object.isRequired,
+            dataSourceKey: PropTypes.string.isRequired,
 
             forwardRef: PropTypes.func,
             height: PropTypes.number,
-            animationDataFormatter: PropTypes.func,
         }
 
         constructor(props) {
             super(props);
 
+            this.state = {
+                visHeight: props.height ? props.height : null,
+                visWidth: null,
+            };
+
             this.lastValidData = null;
-            this.visWidth = null;
-            this.visHeight = props.height ? props.height : null;
+            this.updateContainerRectBound = ::this.updateContainerRect;
         }
 
         componentDidUpdate() {
@@ -34,52 +38,59 @@ function animated(VisualizationComp) {
 
         componentDidMount() {
             this.updateContainerRect();
+            window.addEventListener('resize', this.updateContainerRectBound);
+        }
+
+        componentWillUnmount() {
+            window.removeEventListener('resize', this.updateContainerRectBound);
         }
 
         updateContainerRect() {
-            if (!this.lastValidData || this.props.animationStatus.isBuffering || this.props.animationStatus.error) return;
+            const msgDisplayed = this.props.animationStatus.isBuffering || this.props.animationStatus.error;
+            if (!this.lastValidData || msgDisplayed) return;
 
             const visRect = this.containerNode.getClientRects()[0];
-            this.visWidth = visRect.width;
-            this.visHeight = visRect.height;
+            if (visRect.width !== this.state.visWidth ||
+                visRect.height !== this.state.visHeight) {
+                this.setState({visHeight: visRect.height, visWidth: visRect.width});
+            }
         }
 
         render() {
+            const {
+                forwardRef,
+                dataSourceKey,
+                animationData,
+                animationStatus,
+                ...visualizationProps
+            } = this.props;
+
             let message = null;
             let withSpinner = false;
-            let data = this.props.animationData;
-            if (this.props.animationStatus.error) {
-                data = this.lastValidData;
 
-                message = new String(this.props.animationStatus.error);
-            } else if (this.props.animationStatus.isBuffering) {
-                data = this.lastValidData;
+            let data = (animationData && animationData[dataSourceKey]) || this.lastValidData;
 
-                withSpinner = true;
-                message =  "Loading...";
-            } else if (data !== null) {
-                data = this.props.animationDataFormatter ? this.props.animationDataFormatter(data) : data;
+            if (data !== null) {
                 this.lastValidData = data;
             }
 
-            let width = this.visWidth + "px" || "100%";
-            let height = this.visHeight + "px" || "100%";
+            if (animationStatus.error) {
+                message = new String(animationStatus.error);
+            } else if (animationStatus.isBuffering) {
+                withSpinner = true;
+                message =  "Loading...";
+            }
+
             const overlayStyles = {
-                width: width,
-                height: height,
+                width: this.visWidth ? this.visWidth + "px" : "100%",
+                height: this.visHeight ? this.visHeight + "px" : "100%",
             };
-
-            const msgContainerStyles = {
-                paddingTop: this.visHeight/2 + "px" || "0px",
-            };
-
-            const {forwardRef, animationDataFormatter, ...visualizationProps} = this.props;
 
             return (
-                <div ref={node => this.containerNode = node}>
+                <div ref={node => this.containerNode = node} className={styles.animatedContainer}>
                     {message &&
                         <div className={styles.loadingOverlay} style={overlayStyles}>
-                            <div className={styles.loadingMsgContainer} style={msgContainerStyles}>
+                            <div className={styles.loadingMsgContainer}>
                                 {withSpinner &&
                                     <div className={styles.loadingSpinner + " spinner-border"} role={"status"}>
                                         <span className={"sr-only"}>Loading</span>
@@ -89,7 +100,7 @@ function animated(VisualizationComp) {
                             </div>
                         </div>
                     }
-                    {data && <VisualizationComp {...visualizationProps} data={data} ref={this.props.forwardRef} />}
+                    {data && <VisualizationComp {...visualizationProps} data={data} ref={forwardRef} />}
                 </div>
             );
         }
