@@ -1,14 +1,33 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
 
-import {withComponentMixins} from "../lib/decorator-helpers";
-import {
-    withAnimationData,
-    withAnimationStatus,
-} from "../lib/animation-helpers";
+import {withComponentMixins, createComponentMixin} from "../lib/decorator-helpers";
 import styles from "./AnimationCommon.scss";
 
-function animated(VisualizationComp) {
+export const AnimationStatusContext = React.createContext(null);
+export const AnimationControlContext = React.createContext(null);
+export const AnimationDataContext = React.createContext(null);
+export const AnimationDataAccessContext = React.createContext(null);
+
+export const withAnimationControl = createComponentMixin({
+    contexts: [
+        {context: AnimationStatusContext, propName: 'animationStatus'},
+        {context: AnimationControlContext, propName: 'animationControl'}
+    ]
+});
+
+export const withAnimationStatus = createComponentMixin({
+    contexts: [
+        {context: AnimationStatusContext, propName: 'animationStatus'},
+    ]
+});
+
+export const withAnimationData = createComponentMixin({
+    contexts: [ {context: AnimationDataContext, propName: 'animationData'} ]
+});
+
+
+export function animated(VisualizationComp) {
     @withComponentMixins([withAnimationData, withAnimationStatus])
     class AnimatedContent extends Component {
         static propTypes = {
@@ -111,8 +130,4 @@ function animated(VisualizationComp) {
     });
 }
 
-export * from "../lib/media-controls";
-export * from "../lib/animation-interpolations";
-export {
-    animated,
-};
+export * from '../lib/animation-interpolations';

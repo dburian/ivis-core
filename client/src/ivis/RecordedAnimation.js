@@ -3,28 +3,27 @@ import {
     AnimationStatusContext,
     AnimationControlContext,
     AnimationDataContext,
-    SigSetInterpolator
-} from "../lib/animation-helpers";
+} from "./AnimationCommon";
+import {SigSetInterpolator} from "../lib/animation-helpers";
 import {withAsyncErrorHandler} from "../lib/error-handling";
 import {DataAccessSession} from "./DataAccess";
 import {withComponentMixins} from "../lib/decorator-helpers";
 import {intervalAccessMixin, TimeContext} from "./TimeContext";
 import {IntervalSpec} from "./TimeInterval";
+import {bisector} from "d3-array";
 import moment from "moment";
 import _ from "lodash";
 import PropTypes from "prop-types";
 
 
-//When the tab is inactive, setIntervals and setTimeouts that are scheduled within less than 1s are triggered after
-//1s. This means that we want to store at least 1s of keyframes ahead of the
-//current position.
+//When the tab is inactive, requests for animation frames are slowed down to 1
+//or 2 per second. This means that we want to store at least 1s of keyframes
+//ahead of the current position.
 const inactiveTabTimePillow = 1000;
 
 const defaultMaxTimeFetched = 30000;
 const defaultMaxKeyframesStored = 1000;
 const defaultPlaybackSpeedAggFactor = 5;
-const defaultRefreshRate = 1000/24;
-const minRefreshRate = 5;
 
 class RecordedAnimation extends Component {
     static propTypes = {
@@ -35,15 +34,12 @@ class RecordedAnimation extends Component {
         defaultGetMinAggregationInterval: PropTypes.func,
 
         initialStatus: PropTypes.object,
-        refreshRate: PropTypes.number,
-
         children: PropTypes.node,
     }
 
     static defaultProps = {
         initialIntervalSpec: new IntervalSpec('now-6d', 'now', null, null),
         intervalConfigPath: ['animationTimeContext'],
-        refreshRate: defaultRefreshRate,
         initialStatus: {
             isPlaying: false,
             playbackSpeedFactor: 1,
@@ -55,7 +51,6 @@ class RecordedAnimation extends Component {
         const childrenRender = (props) => {
             return (
                 <RecordedAnimationControl
-                    refreshRate={this.props.refreshRate}
                     initialStatus={this.props.initialStatus}
                     {...props}
                 >
@@ -63,10 +58,6 @@ class RecordedAnimation extends Component {
                 </RecordedAnimationControl>
             );
         };
-        const refreshRate = this.props.refreshRate === null || Number.isNaN(this.props.refreshRate) ?
-            minRefreshRate :
-            Math.max(minRefreshRate, this.props.refreshRate)
-        ;
 
         return (
             <TimeContext
@@ -76,8 +67,6 @@ class RecordedAnimation extends Component {
             >
 
                 <AnimationDataAccess
-                    refreshRate={refreshRate}
-
                     dataSources={this.props.dataSources}
                     render={childrenRender}
                 />
@@ -152,7 +141,7 @@ class GenericDataSource {
         );
     }
     didMissFetch() {
-        this.timePillowFactor += 1;
+        this.timePillowFactor *= 2;
     }
 
     shiftTo(ts) {
@@ -169,8 +158,8 @@ class GenericDataSource {
                     i++;
                 }
 
-                const historyFirstIdx = sigSet.history.findIndex(kf => kf.ts >= historyFirstTs);
-                sigSet.history.splice(0, historyFirstIdx);
+                const historyFirstIdx = bisector(kf => kf.ts).left(sigSet.history, historyFirstTs);
+                if (historyFirstIdx > 0) sigSet.history.splice(0, historyFirstIdx);
             }
         }
 
@@ -181,10 +170,13 @@ class GenericDataSource {
 
             if (sigSet.buffer.length < arity ||
                 sigSet.buffer[sigSet.buffer.length - 1].ts < ts) {
+
                 sigSet.buffer = [];
                 sigSet.intp.clearArgs();
 
-                sigSet.intp.rebuildArgs(sigSet.buffer);
+                if (sigSet.intp.hasCachedArgs) {
+                    sigSet.intp.rebuildArgs(sigSet.buffer);
+                }
             } else if (needsShift()) {
                 while(needsShift()) {
                     const kfsToDelete = Math.min(
@@ -624,7 +616,6 @@ const dataSources = {
 @withComponentMixins([intervalAccessMixin()])
 class AnimationDataAccess extends Component {
     static propTypes = {
-        refreshRate: PropTypes.number.isRequired,
         dataSources: PropTypes.object.isRequired,
         render: PropTypes.func.isRequired,
     }
@@ -644,7 +635,7 @@ class AnimationDataAccess extends Component {
 
         this.maxFetchTime = 0;
 
-        this.mapDataSources = (func) => Object.keys(this.dataSources).map(dsKey => func(this.dataSources[dsKey], dsKey));
+        this.runNextChunkQueries = (dtSrcKeys) => this.runQueries(dtSrcKeys, "getNextChunkQueries", [this.maxFetchTime], "processNextChunkQueries");
         this.reset();
     }
 
@@ -666,16 +657,23 @@ class AnimationDataAccess extends Component {
     }
 
     refreshTo(ts) {
-        if (this.state.needsReseek || this.nextFetchPromise) return {data: null};
+        if (this.state.needsReseek) return {data: null};
 
         const dataSourcesToFetch = Object.keys(this.dataSources).filter(dataSrcKey => !this.dataSources[dataSrcKey].canShiftTo(ts));
 
         if (dataSourcesToFetch.length === 0) {
+            if (!this.nextFetchPromise) {
+                this.runNextChunkQueries(Object.keys(this.dataSources));
+            }
+
             return {data: this.shiftTo(ts)};
         }
 
+        //Needs to fetch, but one is already under way.
+        if (this.nextFetchPromise) return {data: null};
+
         dataSourcesToFetch.map(dtSrcKey => this.dataSources[dtSrcKey].didMissFetch());
-        this.runQueries(dataSourcesToFetch, "getNextChunkQueries", [this.maxFetchTime], "processNextChunkQueries");
+        this.runNextChunkQueries(dataSourcesToFetch);
         const promise = this.nextFetchPromise.then(wasLatestFetch => {
             if (!wasLatestFetch || this.state.needsReseek) return null;
 
@@ -733,12 +731,12 @@ class AnimationDataAccess extends Component {
         };
 
         this.nextFetchPromise = _runQueries();
-        const beforeFetchTs = Date.now();
+        const beforeFetchTs = performance.now();
 
         const wasLatestFetch = await this.nextFetchPromise;
 
         this.nextFetchPromise = null;
-        this.maxFetchTime = Math.max(this.maxFetchTime, Date.now() - beforeFetchTs);
+        this.maxFetchTime = Math.max(this.maxFetchTime, performance.now() - beforeFetchTs);
 
         return wasLatestFetch;
     }
@@ -749,13 +747,6 @@ class AnimationDataAccess extends Component {
             data[dataSrcKey] = this.dataSources[dataSrcKey].shiftTo(ts);
         }
 
-        this.runQueries(
-            Object.keys(this.dataSources),
-            "getNextChunkQueries",
-            [this.maxFetchTime],
-            "processNextChunkQueries"
-        );
-
         return data;
     }
 
@@ -765,7 +756,9 @@ class AnimationDataAccess extends Component {
         return true;
     }
     getPlaybackSpeedFactorBasedAggStep(minFramesPerKeyframe) {
-        return moment.duration(minFramesPerKeyframe * this.props.refreshRate * this.playbackSpeedFactor);
+        //requestAnimationFrame has variable refresh interval, which should
+        //match the refresh interval of the screen --- usually 60 FPS.
+        return moment.duration(minFramesPerKeyframe * 1000/60 * this.playbackSpeedFactor);
     }
 
     reset() {
@@ -789,7 +782,6 @@ class AnimationDataAccess extends Component {
 @withComponentMixins([intervalAccessMixin()])
 class RecordedAnimationControl extends Component {
     static propTypes = {
-        refreshRate: PropTypes.number.isRequired,
         initialStatus: PropTypes.object.isRequired,
 
         seek: PropTypes.func.isRequired,
@@ -821,8 +813,9 @@ class RecordedAnimationControl extends Component {
             animationData: props.getEmptyData(),
         };
 
-        this.refreshTimeout = null;
-        this.inRefresh = false;
+        this.nextFrameId = null;
+        this.refreshBound = ::this.refresh;
+        this.errorHandlerBound = ::this.errorHandler;
     }
 
     componentDidUpdate(prevProps) {
@@ -935,21 +928,16 @@ class RecordedAnimationControl extends Component {
 
         const animData = await this.props.seek(clampedTs);
 
-        console.log(animData);
         if (animData !== null) {
             this.setState({animationData: animData});
-            console.log(this.state.status.isPlaying);
             this.setStatus({isBuffering: this.state.status.isPlaying});
         }
     }
 
-
-    @withAsyncErrorHandler
-    async refresh() {
-        this.inRefresh = true;
-
-        const interval = Date.now() - this.lastRefreshTs;
-        this.lastRefreshTs = Date.now();
+    refresh(msSinceOrigin) {
+        const interval = this.savedInterval || msSinceOrigin - this.lastRefreshTs;
+        this.savedInterval = null;
+        this.lastRefreshTs = performance.now();
 
         const endPosition = this.getIntervalAbsolute().to.valueOf();
         const nextPosition = Math.min(
@@ -957,52 +945,54 @@ class RecordedAnimationControl extends Component {
             this.state.status.position + (this.state.status.playbackSpeedFactor * interval)
         );
 
+        const {data, promise} = this.props.refreshTo(nextPosition);
 
-        let {data, promise} = this.props.refreshTo(nextPosition);
-
-        if (promise) {
+        if (!data) {
             if (!this.state.status.isBuffering)
                 this.setStatus({isBuffering: true});
 
-            data = await promise;
-            this.lastRefreshTs = Date.now();
+            this.savedInterval = interval;
+            this.nextFrameId = requestAnimationFrame(this.refreshBound);
+
+            if (promise) {
+                const position = this.state.status.position;
+                promise.then(data => {
+                    if (data && this.state.status.position === position) {
+                        this.setState({animationData: data});
+                    }
+                }).catch(this.errorHandlerBound);
+            }
+
+            return;
         }
 
-        if (data !== null) {
-            this.setStatus({
-                isBuffering: false,
-                position: nextPosition,
-            });
-
-            this.setState({
-                animationData: data,
-            });
-        }
+        this.setState(state => {
+            const nextStatus = Object.assign({}, state.status, {isBuffering: false, position: nextPosition});
+            return {status: nextStatus, animationData: data};
+        });
 
 
         if (nextPosition !== endPosition && this.isRefreshing) {
-            const computeTime = Date.now() - this.lastRefreshTs;
-            this.refreshTimeout = setTimeout(::this.refresh, Math.max(0, this.props.refreshRate - computeTime));
+            this.nextFrameId = requestAnimationFrame(this.refreshBound);
         } else {
             this.pauseHandler();
         }
-
-        this.inRefresh = false;
     }
 
     startRefreshing() {
         if (this.isRefreshing) return;
-
         this.isRefreshing = true;
-        if (this.inRefresh) return;
 
-        this.lastRefreshTs = Date.now();
-        this.refreshTimeout = setTimeout(::this.refresh, this.props.refreshRate);
+        this.lastRefreshTs = performance.now();
+        this.nextFrameId = requestAnimationFrame(this.refreshBound);
+    }
+
+    scheduleRefresh() {
     }
 
     stopRefreshing() {
         this.isRefreshing = false;
-        clearTimeout(this.refreshTimeout);
+        cancelAnimationFrame(this.nextFrameId);
     }
 
     setStatus(nextStatus) {

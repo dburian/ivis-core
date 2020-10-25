@@ -6,8 +6,8 @@ import {
     AnimationStatusContext,
     AnimationControlContext,
     AnimationDataContext,
-    SigSetInterpolator
-} from "../lib/animation-helpers";
+} from "./AnimationCommon";
+import {SigSetInterpolator} from "../lib/animation-helpers";
 import {withAsyncErrorHandler} from "../lib/error-handling";
 import {withComponentMixins} from "../lib/decorator-helpers";
 import {intervalAccessMixin, TimeContext} from "./TimeContext";
@@ -15,8 +15,6 @@ import {IntervalSpec} from "./TimeInterval";
 import moment from "moment";
 import _ from "lodash";
 
-const defaultRefreshRate = 45;
-const minRefreshRate = 5;
 const defaultPollRate = 1000;
 const minPollRate = 50;
 
@@ -28,7 +26,6 @@ class LiveAnimation extends Component {
         intervalSpanBefore: PropTypes.object,
         intervalSpanAfter: PropTypes.object,
 
-        refreshRate: PropTypes.number,
         initialStatus: PropTypes.object,
 
         pollRate: PropTypes.number,
@@ -40,7 +37,6 @@ class LiveAnimation extends Component {
         intervalSpanBefore: moment.duration(10, 'm'),
         intervalSpanAfter: moment.duration(3, 'm'),
 
-        refreshRate: defaultRefreshRate,
         pollRate: defaultPollRate,
         initialStatus: {isPlaying: false},
     }
@@ -57,10 +53,6 @@ class LiveAnimation extends Component {
     }
 
     render() {
-        const refreshRate = this.props.refreshRate === null || Number.isNaN(this.props.refreshRate) ?
-            minRefreshRate :
-            Math.max(minRefreshRate, this.props.refreshRate)
-        ;
         const pollRate = this.props.pollRate === null || Number.isNaN(this.props.pollRate) ?
             minPollRate :
             Math.max(minPollRate, this.props.pollRate)
@@ -76,7 +68,6 @@ class LiveAnimation extends Component {
                     intervalSpanBefore={this.props.intervalSpanBefore}
                     intervalSpanAfter={this.props.intervalSpanAfter}
 
-                    refreshRate={refreshRate}
                     initialStatus={this.props.initialStatus}
                     {...props}>
                     {this.props.children}
@@ -385,7 +376,6 @@ class LiveAnimationControl extends Component {
         pollRate: PropTypes.number.isRequired,
         animationId: PropTypes.string.isRequired,
 
-        refreshRate: PropTypes.number.isRequired,
         initialStatus: PropTypes.object.isRequired,
 
         intervalSpanBefore: PropTypes.object.isRequired,
@@ -414,6 +404,7 @@ class LiveAnimationControl extends Component {
         };
         this.lastStatus = {};
         this.isRefreshing = false;
+        this.refreshBound = ::this.refresh;
     }
 
     componentDidUpdate(prevProps) {
@@ -439,7 +430,7 @@ class LiveAnimationControl extends Component {
     }
 
     componentWillUnmount() {
-        clearTimeout(this.refreshTimeout);
+        cancelAnimationFrame(this.nextFrameId);
         clearInterval(this.fetchStatusInterval);
     }
 
@@ -459,7 +450,7 @@ class LiveAnimationControl extends Component {
     errorHandler(error) {
         console.error(error);
 
-        clearTimeout(this.refreshTimeout);
+        cancelAnimationFrame(this.nextFrameId);
         clearInterval(this.fetchStatusInterval);
         this.setState({controls: {}});
         this.setStatus({error});
@@ -530,29 +521,24 @@ class LiveAnimationControl extends Component {
     }
 
 
-    refresh() {
-        let nextPosition;
-        if (this.savedPosition) {
-            nextPosition = this.savedPosition;
-            this.savedPosition = null;
-        } else {
-            nextPosition = this.lastRefreshTs === null ?
-                this.state.status.position :
-                this.state.status.position + (Date.now() - this.lastRefreshTs);
-        }
-        this.lastRefreshTs = Date.now();
+    refresh(elapsedTs) {
+        const interval = this.savedInterval || elapsedTs - this.lastRefreshTs;
+        this.savedInterval = null;
+
+        this.lastRefreshTs = performance.now();
+        const nextPosition = this.state.status.position + interval;
 
         const data = this.props.shiftTo(nextPosition);
 
         if (data === null) {
-            this.savedPosition = nextPosition;
+            this.savedInterval = interval;
             this.setStatus({isBuffering: true});
         } else {
             this.setState({animationData: data});
             this.setStatus({position: nextPosition, isBuffering: false});
         }
 
-        this.refreshTimeout = setTimeout(::this.refresh, Math.max(0, this.props.refreshRate - (Date.now() - this.lastRefreshTs)));
+        this.nextFrameId = requestAnimationFrame(this.refreshBound);
     }
 
     handlePlay(nextStatus = {}) {
@@ -564,9 +550,8 @@ class LiveAnimationControl extends Component {
 
         this.props.clearKeyframes();
 
-        this.savedPosition = null;
-        this.lastRefreshTs = null;
-        this.refreshTimeout = setTimeout(::this.refresh, this.props.refreshRate);
+        this.lastRefreshTs = performance.now();
+        this.nextFrameId = requestAnimationFrame(::this.refresh);
 
         return nextStatus;
     }
@@ -574,7 +559,7 @@ class LiveAnimationControl extends Component {
     handlePause(nextStatus = {}) {
         this.isRefreshing = false;
 
-        clearTimeout(this.refreshTimeout);
+        cancelAnimationFrame(this.nextFrameId);
         nextStatus.isPlaying = false;
         nextStatus.isBuffering = false;
 

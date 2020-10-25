@@ -7,6 +7,7 @@ import {scaleTime, scaleLinear} from "d3-scale";
 import {zoom, zoomTransform} from "d3-zoom";
 import {extent} from "d3-array";
 import {
+    AnimationStatusContext,
     LiveAnimation,
     animated,
     withPanelConfig,
@@ -18,6 +19,8 @@ import {
     SVG,
 } from "ivis";
 import PropTypes from "prop-types";
+
+const SVG_HISTORY = 1000*60;
 
 const dtSrces = {
     lineChart_cpu: {
@@ -42,7 +45,7 @@ const dtSrces = {
     },
     svg_disk: {
         type: 'generic',
-        history: 1000*60*1,
+        history: SVG_HISTORY,
         sigSets: [{
             cid: 'disk_load',
             signalCids: ['readIOPerSec', 'writeIOPerSec', 'totalIOPerSec'],
@@ -133,8 +136,8 @@ class Memory extends Component {
             },
             groups: [
                 {
-                    label: 'Total',
-                    colors: [this.props.totalMemoryColor],
+                    label: 'Free',
+                    colors: [this.props.freeMemoryColor],
                     values: [
                         {
                             sigSetCid: dtSrces.barChart_mem.sigSets[0].cid,
@@ -155,8 +158,8 @@ class Memory extends Component {
                     ]
                 },
                 {
-                    label: 'Free',
-                    colors: [this.props.freeMemoryColor],
+                    label: 'Total',
+                    colors: [this.props.totalMemoryColor],
                     values: [
                         {
                             sigSetCid: dtSrces.barChart_mem.sigSets[0].cid,
@@ -191,6 +194,8 @@ class SVGChart extends Component {
         config: PropTypes.object,
         data: PropTypes.object,
         height: PropTypes.number,
+        position: PropTypes.number,
+        xExtents: PropTypes.arrayOf(PropTypes.number),
     }
 
     constructor(props) {
@@ -200,7 +205,7 @@ class SVGChart extends Component {
         this.boundUpdateDots = ::this.updateDots;
         this.resizeListener = ::this.updateContainerWidth;
         this.svgImg = `
-        <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+        <svg id="svg" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
             <g id="content">
                 <g id="grid">
                     <g id="horizontal"/>
@@ -239,6 +244,7 @@ class SVGChart extends Component {
         const gridSel = this.svgSel.select('#grid');
         const legendSel = this.svgSel.select('#legend');
 
+
         const conf = this.props.config;
         const data = this.props.data;
 
@@ -251,17 +257,19 @@ class SVGChart extends Component {
                 .filter(({x, y}) => x !== null && y !== null)
         );
 
+        const xExtents = [
+            this.props.position - this.props.xExtents[0],
+            this.props.position + this.props.xExtents[1],
+        ];
+
         let yExtents = [];
-        let xExtents = [];
         for (const lineConf of conf.lines) {
             yExtents = extent([...yExtents, ...getCoordsFromLineConf(lineConf).map(c => c.y)]);
-            xExtents = extent([...xExtents, ...getCoordsFromLineConf(lineConf).map(c => c.x)]);
         }
 
         if (yExtents.every(v => v === undefined)) {
             messageSel.text('No data.');
             yExtents = [0, 1];
-            xExtents = [0, 1];
         } else {
             messageSel.text(null);
         }
@@ -310,7 +318,6 @@ class SVGChart extends Component {
             .attr('fill', d => d.color)
             .text(d => d.label);
 
-        const scaleFactor = zoomTransform(this.svgSel.select('#content').node()).k;
         dotsSel.selectAll('.line')
             .data(conf.lines)
             .join(enter => enter.append('g').classed('line', true))
@@ -323,20 +330,6 @@ class SVGChart extends Component {
                 .attr('cx', d => x(d.x))
                 .attr('cy', d => y(d.y))
             )
-            .call(sel => sel.selectAll('.label')
-                .data(d => getCoordsFromLineConf(d).filter((coors, idx) => idx % 10 === 0))
-                .join(enter => enter.append('text').classed('label', true))
-                .attr('fill', 'currentColor')
-                .attr('x', d => x(d.x))
-                .attr('y', d => y(d.y))
-                .attr('dx', '-0.9em')
-                .attr('dy', '0.2em')
-                .attr('font-size', '5px')
-                .attr('text-anchor', 'end')
-                .attr('transform', d => `rotate(45, ${x(d.x)}, ${y(d.y)})`)
-                .attr('opacity', scaleFactor > 2 ? 1 : 0)
-                .text(d => `y: ${d.y.toFixed(0)}, time: ${moment(d.x).format('YYYY/MM/DD HH:mm')}`)
-            );
     }
 
     render() {
@@ -358,7 +351,6 @@ class SVGChart extends Component {
                                 .on('zoom', () => {
                                     this.svgSel.select('#content')
                                         .attr("transform", event.transform);
-                                    this.svgSel.selectAll('.label').attr('opacity', event.transform.k > 2 ? 1 : 0)
                                 })
                             );
                         }}
@@ -371,8 +363,8 @@ class SVGChart extends Component {
         );
     }
 }
-const AnimatedSVGChart = animated(SVGChart);
 
+const AnimatedSVGChart = animated(SVGChart);
 class Disk extends Component {
     static propTypes = {
         diskReadColor: PropTypes.object,
@@ -409,11 +401,17 @@ class Disk extends Component {
 
         return (
             <Frame name={"Disk load"}>
-                <AnimatedSVGChart
-                    dataSourceKey={'svg_disk'}
-                    height={300}
-                    config={config}
-                />
+                <AnimationStatusContext.Consumer>
+                    {animationStatus =>
+                        <AnimatedSVGChart
+                            dataSourceKey={'svg_disk'}
+                            height={300}
+                            config={config}
+                            position={animationStatus.position}
+                            xExtents={[SVG_HISTORY, SVG_HISTORY/10]}
+                        />
+                    }
+                </AnimationStatusContext.Consumer>
             </Frame>
         );
     }
@@ -425,7 +423,6 @@ export default class Panel extends Component {
         const animConf = this.getPanelConfig(['animation']);
         return {
             pollRate: animConf.pollRate,
-            refreshRate: animConf.refreshRate,
             initialStatus: {
                 isPlaying: animConf.isPlaying,
             },

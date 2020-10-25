@@ -9,19 +9,19 @@ class ServerMonitor {
             position: 0,
             data: {
                 cpu_load: {
-                    load: 0,
-                    user: 0,
-                    system: 0,
+                    current: {avg: 0},
+                    user: {avg: 0},
+                    system: {avg: 0},
                 },
                 mem_status: {
-                    total: 0,
-                    free: 0,
-                    used: 0,
+                    total: {avg: 0},
+                    free: {avg: 0},
+                    used: {avg: 0},
                 },
                 disk_load: {
-                    readIOPerSec: 0,
-                    writeIOPerSec: 0,
-                    totalIOPerSec: 0,
+                    readIOPerSec: {avg: 0},
+                    writeIOPerSec: {avg: 0},
+                    totalIOPerSec: {avg: 0},
                 }
             },
         };

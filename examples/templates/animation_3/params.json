@@ -6,11 +6,6 @@
         "cardinality": "1..1",
         "children": [
             {
-                "id": "refreshRate",
-                "label": "Animation refresh rate in ms",
-                "type": "number"
-            },
-            {
                 "id": "pollRate",
                 "label": "Animation poll rate in ms",
                 "type": "number"

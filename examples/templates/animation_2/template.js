@@ -7,6 +7,7 @@ import {scaleTime, scaleLinear} from 'd3-scale';
 import {zoom, zoomTransform} from 'd3-zoom';
 import {extent} from 'd3-array';
 import {
+    AnimationStatusContext,
     RecordedAnimation,
     OnelineLayout,
     animated,
@@ -23,9 +24,11 @@ import {
 import PropTypes from 'prop-types';
 import styles from './styles.scss';
 
-const pieChartDtSourceKey = 'piechart_dt';
-const lineChartDtSourceKey = 'linechart_dt';
-const svgChartDtSourceKey = 'svgchart_dt';
+const PIE_CHART_DATA_SOURCE_KEY = 'piechart_dt';
+const LINE_CHART_DATA_SOURCE_KEY = 'linechart_dt';
+const SVG_CHART_DATA_SOURCE_KEY = 'svgchart_dt';
+
+const SVG_CHART_HISTORY = 1000*60*60*24*100;
 
 class PanelIntroduction extends Component {
     static propTypes = {
@@ -67,7 +70,7 @@ class LineChartSection extends Component {
         return (
             <div className="container-fluid">
                 <AnimatedLineChart
-                    dataSourceKey={lineChartDtSourceKey}
+                    dataSourceKey={LINE_CHART_DATA_SOURCE_KEY}
                     config={config}
                     height={500}
                     withTooltip
@@ -169,7 +172,7 @@ class SinglePieChartSection extends Component {
             <div className="col-6">
                 <h4 className="text-center">{this.props.label}</h4>
                 <AnimatedPieChart
-                    dataSourceKey={pieChartDtSourceKey}
+                    dataSourceKey={PIE_CHART_DATA_SOURCE_KEY}
                     config={{arcs: this.props.arcs}}
                     height={150}
                     legendPosition={LegendPosition.BOTTOM}
@@ -185,6 +188,8 @@ class SVGChart extends Component {
         config: PropTypes.object,
         data: PropTypes.object,
         height: PropTypes.number,
+        position: PropTypes.number,
+        xExtents: PropTypes.arrayOf(PropTypes.number),
     }
 
     constructor(props) {
@@ -233,6 +238,7 @@ class SVGChart extends Component {
         const gridSel = this.svgSel.select('#grid');
         const legendSel = this.svgSel.select('#legend');
 
+
         const conf = this.props.config;
         const data = this.props.data;
 
@@ -245,17 +251,19 @@ class SVGChart extends Component {
                 .filter(({x, y}) => x !== null && y !== null)
         );
 
+        const xExtents = [
+            this.props.position - this.props.xExtents[0],
+            this.props.position + this.props.xExtents[1],
+        ];
+
         let yExtents = [];
-        let xExtents = [];
         for (const lineConf of conf.lines) {
             yExtents = extent([...yExtents, ...getCoordsFromLineConf(lineConf).map(c => c.y)]);
-            xExtents = extent([...xExtents, ...getCoordsFromLineConf(lineConf).map(c => c.x)]);
         }
 
         if (yExtents.every(v => v === undefined)) {
             messageSel.text('No data.');
             yExtents = [0, 1];
-            xExtents = [0, 1];
         } else {
             messageSel.text(null);
         }
@@ -304,7 +312,6 @@ class SVGChart extends Component {
             .attr('fill', d => d.color)
             .text(d => d.label);
 
-        const scaleFactor = zoomTransform(this.svgSel.select('#content').node()).k;
         dotsSel.selectAll('.line')
             .data(conf.lines)
             .join(enter => enter.append('g').classed('line', true))
@@ -317,20 +324,6 @@ class SVGChart extends Component {
                 .attr('cx', d => x(d.x))
                 .attr('cy', d => y(d.y))
             )
-            .call(sel => sel.selectAll('.label')
-                .data(d => getCoordsFromLineConf(d).filter((coors, idx) => idx % 10 === 0))
-                .join(enter => enter.append('text').classed('label', true))
-                .attr('fill', 'currentColor')
-                .attr('x', d => x(d.x))
-                .attr('y', d => y(d.y))
-                .attr('dx', '-0.9em')
-                .attr('dy', '0.2em')
-                .attr('font-size', '5px')
-                .attr('text-anchor', 'end')
-                .attr('transform', d => `rotate(45, ${x(d.x)}, ${y(d.y)})`)
-                .attr('opacity', scaleFactor > 2 ? 1 : 0)
-                .text(d => `y: ${d.y.toFixed(0)}, time: ${(new Date(d.x)).toLocaleString()}`)
-            );
     }
 
     render() {
@@ -352,7 +345,6 @@ class SVGChart extends Component {
                                 .on('zoom', () => {
                                     this.svgSel.select('#content')
                                         .attr("transform", event.transform);
-                                    this.svgSel.selectAll('.label').attr('opacity', event.transform.k > 2 ? 1 : 0)
                                 })
                             );
                         }}
@@ -391,11 +383,17 @@ class SVGChartSection extends Component {
 
     render() {
         return (
-            <AnimatedSVGChart
-                dataSourceKey={svgChartDtSourceKey}
-                config={{lines: this.getLines()}}
-                height={500}
-            />
+            <AnimationStatusContext.Consumer>
+                {animationStatus =>
+                    <AnimatedSVGChart
+                        dataSourceKey={SVG_CHART_DATA_SOURCE_KEY}
+                        config={{lines: this.getLines()}}
+                        height={500}
+                        position={animationStatus.position}
+                        xExtents={[SVG_CHART_HISTORY, SVG_CHART_HISTORY/10]}
+                    />
+                }
+            </AnimationStatusContext.Consumer>
         );
     }
 }
@@ -407,7 +405,7 @@ export default class Panel extends Component {
         const pieChartDtSets = this.getPanelConfig(['pieChart', 'dataSets']);
 
         const dataSources = {};
-        dataSources[pieChartDtSourceKey] = {
+        dataSources[PIE_CHART_DATA_SOURCE_KEY] = {
             type: 'generic',
             interpolation: linearInterpolation,
 
@@ -420,7 +418,7 @@ export default class Panel extends Component {
 
 
         const lineChartSigSets = this.getPanelConfig(['lineChart', 'sigSets']);
-        dataSources[lineChartDtSourceKey] = {
+        dataSources[LINE_CHART_DATA_SOURCE_KEY] = {
             type: 'timeSeries',
             interpolation: linearInterpolation,
 
@@ -429,16 +427,15 @@ export default class Panel extends Component {
         };
 
         const svgChartSigSets = this.getPanelConfig(['svgChart', 'sigSets']);
-        dataSources[svgChartDtSourceKey] = {
+        dataSources[SVG_CHART_DATA_SOURCE_KEY] = {
             type: 'generic',
-            history: 5000,
+            history: SVG_CHART_HISTORY,
             interpolation: linearInterpolation,
 
             sigSets: svgChartSigSets,
         };
 
         return {
-            refreshRate: c.refreshRate,
             initialStatus: c.initialStatus && {
                 isPlaying: !!c.initialStatus.isPlaying,
                 position: c.initialStatus.positionISO && moment.utc(c.initialStatus.positionISO).valueOf(),

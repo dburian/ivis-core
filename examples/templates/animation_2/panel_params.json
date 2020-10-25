@@ -1,6 +1,5 @@
 {
     "animationConfig": {
-        "refreshRate": "50",
         "initialStatus": {
             "positionISO": "2020-07-19T10:50:32Z",
             "playbackSpeedFactor": "50"

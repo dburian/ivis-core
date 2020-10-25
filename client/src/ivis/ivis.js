@@ -19,9 +19,6 @@ export * from './Legend';
 export * from './SVG';
 export * from './Records';
 export * from './Selector';
-export * from './AnimationCommon';
-export * from './LiveAnimation';
-export * from './RecordedAnimation';
 export * from './Debug';
 export * from './ScatterPlot';
 export * from './BubblePlot';
@@ -30,3 +27,8 @@ export * from './BarChart';
 export * from './MinMaxLoader';
 export * from './dot_shapes';
 export * from './SimpleBarChart';
+
+export * from './AnimationCommon';
+export * from './LiveAnimation';
+export * from './RecordedAnimation';
+export * from './AnimationControls';

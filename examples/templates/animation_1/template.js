@@ -213,7 +213,6 @@ export default class Panel extends Component {
 
 
         return {
-            refreshRate: ac.refreshRate,
             initialStatus: ac.initialStatus && {
                 isPlaying: !!ac.initialStatus.isPlaying,
                 position: ac.initialStatus.positionISO && moment.utc(ac.initialStatus.positionISO).valueOf(),

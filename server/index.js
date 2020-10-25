@@ -20,7 +20,7 @@ const { AppType } = require('../shared/app');
 const bluebird = require('bluebird');
 const savePdf = require('./lib/pdf-export');
 
-const serverMonitorAnimation = require('./services/animations/server-monitor').create();
+const serverMonitorAnimation = require('../examples/animations/server-monitor').create();
 
 emCommonDefaults.setDefaults(em);
 em.set('animation.monitor', serverMonitorAnimation);

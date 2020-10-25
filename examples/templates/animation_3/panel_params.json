@@ -1,6 +1,5 @@
 {
         "animation": {
-            "refreshRate": "50",
             "pollRate": "800",
             "isPlaying": false,
             "intervalSpanBefore": "5000",

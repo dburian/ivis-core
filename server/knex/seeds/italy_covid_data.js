@@ -162,7 +162,6 @@ async function createSigSet(knex, sigSetCid, data, population, regionName) {
 }
 
 exports.seed = (knex) => (async () => {
-    return;
     const [indexData, demographicsData, epidemiologyData] = await Promise.all([
         loadJSONFromCsv(urls.index),
         loadJSONFromCsv(urls.demographics),

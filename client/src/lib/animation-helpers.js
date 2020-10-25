@@ -1,29 +1,4 @@
-import {createComponentMixin} from "./decorator-helpers";
-import React from "react";
 import moment from "moment";
-
-
-export const AnimationStatusContext = React.createContext(null);
-export const AnimationControlContext = React.createContext(null);
-export const AnimationDataContext = React.createContext(null);
-export const AnimationDataAccessContext = React.createContext(null);
-
-export const withAnimationControl = createComponentMixin({
-    contexts: [
-        {context: AnimationStatusContext, propName: 'animationStatus'},
-        {context: AnimationControlContext, propName: 'animationControl'}
-    ]
-});
-
-export const withAnimationStatus = createComponentMixin({
-    contexts: [
-        {context: AnimationStatusContext, propName: 'animationStatus'},
-    ]
-});
-
-export const withAnimationData = createComponentMixin({
-    contexts: [ {context: AnimationDataContext, propName: 'animationData'} ]
-});
 
 export class SigSetInterpolator {
     constructor(signalCids, aggs, intp) {
@@ -71,7 +46,6 @@ export class SigSetInterpolator {
         let forceNull = !this.hasCachedArgs ||
             this.tsArgs[0] > ts || this.tsArgs[this.tsArgs.length - 1] < ts;
 
-        const results = {};
         const interpolateAgg = (sigCid, agg) => forceNull ? null : this.func(this.tsArgs, this.dataArgs[sigCid][agg], ts);
 
         for (const sigCid of this.signalCids) {
@@ -80,16 +54,17 @@ export class SigSetInterpolator {
                 sigResults[agg] = interpolateAgg(sigCid, agg);
             }
 
-            results[sigCid] = sigResults;
+            this.results[sigCid] = sigResults;
         }
 
-        return results;
+        return this.results;
     }
 
     clearArgs() {
         this.dataArgs = {};
         this.tsArgs = [];
 
+        this.results = {};
         this.hasCachedArgs = false;
     }
 }

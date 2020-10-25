@@ -6,11 +6,11 @@ import {select, mouse} from "d3-selection";
 import {scaleLinear, scaleTime} from "d3-scale";
 import {format} from "d3-format";
 import {interpolateString} from "d3-interpolate";
-import styles from "./media-controls.scss";
-import {withAnimationControl} from "./animation-helpers";
-import {withComponentMixins} from "./decorator-helpers";
-import {Button, ButtonDropdown, Icon} from "./bootstrap-components";
-import {intervalAccessMixin} from "../ivis/TimeContext";
+import styles from "./AnimationControls.scss";
+import {withAnimationControl} from "./AnimationCommon";
+import {withComponentMixins} from "../lib/decorator-helpers";
+import {Button, ButtonDropdown, Icon} from "../lib/bootstrap-components";
+import {intervalAccessMixin} from "./TimeContext";
 import moment from "moment";
 
 const defaultPlaybackSpeedSteps = [
