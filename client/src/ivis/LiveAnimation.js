@@ -61,7 +61,7 @@ class LiveAnimation extends Component {
 
         const childrenRender = (props) => {
             return (
-                <LiveAnimationControl
+                <Animation
                     animationId={this.props.animationId}
                     pollRate={pollRate}
 
@@ -71,7 +71,7 @@ class LiveAnimation extends Component {
                     initialStatus={this.props.initialStatus}
                     {...props}>
                     {this.props.children}
-                </LiveAnimationControl>
+                </Animation>
             );
         };
 
@@ -371,7 +371,7 @@ class AnimationDataAccess extends Component {
 }
 
 @withComponentMixins([intervalAccessMixin()])
-class LiveAnimationControl extends Component {
+class Animation extends Component {
     static propTypes = {
         pollRate: PropTypes.number.isRequired,
         animationId: PropTypes.string.isRequired,
@@ -532,7 +532,8 @@ class LiveAnimationControl extends Component {
 
         if (data === null) {
             this.savedInterval = interval;
-            this.setStatus({isBuffering: true});
+            if (!this.state.status.isBuffering)
+                this.setStatus({isBuffering: true});
         } else {
             this.setState({animationData: data});
             this.setStatus({position: nextPosition, isBuffering: false});

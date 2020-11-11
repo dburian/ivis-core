@@ -474,7 +474,8 @@ class Timeline extends Component {
             .domain([intv.from.toDate(), intv.to.toDate()])
             .range([this.state.axisRect.x, this.state.axisRect.x + this.state.axisRect.width]);
 
-        const tickCount = Math.floor((timeScale.range()[1] - timeScale.range()[0])/ 100);
+        //Range minus 50px padding on both sides
+        const tickCount = Math.floor((timeScale.range()[1] - timeScale.range()[0] - 2*50)/ 100);
         const ticks = timeScale.ticks(tickCount);
         const tickFormat = timeScale.tickFormat();
 

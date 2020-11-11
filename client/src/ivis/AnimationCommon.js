@@ -36,43 +36,12 @@ export function animated(VisualizationComp) {
             dataSourceKey: PropTypes.string.isRequired,
 
             forwardRef: PropTypes.func,
-            height: PropTypes.number,
         }
 
         constructor(props) {
             super(props);
 
-            this.state = {
-                visHeight: props.height ? props.height : null,
-                visWidth: null,
-            };
-
             this.lastValidData = null;
-            this.updateContainerRectBound = ::this.updateContainerRect;
-        }
-
-        componentDidUpdate() {
-            this.updateContainerRect();
-        }
-
-        componentDidMount() {
-            this.updateContainerRect();
-            window.addEventListener('resize', this.updateContainerRectBound);
-        }
-
-        componentWillUnmount() {
-            window.removeEventListener('resize', this.updateContainerRectBound);
-        }
-
-        updateContainerRect() {
-            const msgDisplayed = this.props.animationStatus.isBuffering || this.props.animationStatus.error;
-            if (!this.lastValidData || msgDisplayed) return;
-
-            const visRect = this.containerNode.getClientRects()[0];
-            if (visRect.width !== this.state.visWidth ||
-                visRect.height !== this.state.visHeight) {
-                this.setState({visHeight: visRect.height, visWidth: visRect.width});
-            }
         }
 
         render() {
@@ -100,15 +69,10 @@ export function animated(VisualizationComp) {
                 message =  "Loading...";
             }
 
-            const overlayStyles = {
-                width: this.visWidth ? this.visWidth + "px" : "100%",
-                height: this.visHeight ? this.visHeight + "px" : "100%",
-            };
-
             return (
                 <div ref={node => this.containerNode = node} className={styles.animatedContainer}>
                     {message &&
-                        <div className={styles.loadingOverlay} style={overlayStyles}>
+                        <div className={styles.loadingOverlay}>
                             <div className={styles.loadingMsgContainer}>
                                 {withSpinner &&
                                     <div className={styles.loadingSpinner + " spinner-border"} role={"status"}>

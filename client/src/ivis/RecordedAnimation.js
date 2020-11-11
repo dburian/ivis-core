@@ -50,12 +50,12 @@ class RecordedAnimation extends Component {
     render() {
         const childrenRender = (props) => {
             return (
-                <RecordedAnimationControl
+                <Animation
                     initialStatus={this.props.initialStatus}
                     {...props}
                 >
                     {this.props.children}
-                </RecordedAnimationControl>
+                </Animation>
             );
         };
 
@@ -780,7 +780,7 @@ class AnimationDataAccess extends Component {
 }
 
 @withComponentMixins([intervalAccessMixin()])
-class RecordedAnimationControl extends Component {
+class Animation extends Component {
     static propTypes = {
         initialStatus: PropTypes.object.isRequired,
 

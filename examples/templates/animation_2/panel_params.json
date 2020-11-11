@@ -36,7 +36,7 @@
         }
     },
     "pageHeader": "COVID-19 in Italy",
-    "pageDesc": "Italy is one of the countries that has been hit the hardest with the COVID-19 pandemic.  The following visualizations should provide you with basic overview of how the pandemic progressed throughout the country.\\n\\nThere are several sections in this panel. After the introduction you will see a 'Chart types' section, that explains all of the visualizations used. Following the 'Chart types' section, there is the 'Data sets' section, where you can find the animation controls and the visualizations in the context of various districts in Italy.",
+    "pageDesc": "Italy is one of the countries that has been hit the hardest with the COVID-19 pandemic.  The following visualizations should provide you with basic overview of how the pandemic progressed throughout the country.There are several sections in this panel. After the introduction you will see a 'Chart types' section, that explains all of the visualizations used. Following the 'Chart types' section, there is the 'Data sets' section, where you can find the animation controls and the visualizations in the context of various districts in Italy.",
     "lineChart": {
         "sigSets": [
             {
