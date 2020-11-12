@@ -13,6 +13,7 @@ export * from './TimeRangeSelector';
 export * from './Tooltip';
 export * from './template-file';
 export * from './OnOffAreaChart';
+export * from './AreaChart';
 export * from './PieChart';
 export * from './HistogramChart';
 export * from './Legend';
