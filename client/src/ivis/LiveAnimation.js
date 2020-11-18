@@ -487,24 +487,10 @@ class Animation extends Component {
         const nextStatus = {};
 
         if (newStatus.isPlaying && !this.isRefreshing) {
-
-            this.isRefreshing = true;
-
             nextStatus.position = newStatus.position;
-            nextStatus.isPlaying = true;
-            nextStatus.isBuffering = true;
-
-            this.props.clearKeyframes();
-
-            this.lastRefreshTs = performance.now();
-            this.nextFrameId = requestAnimationFrame(this.refreshBound);
-
+            this.handlePlay(nextStatus);
         } else if (!newStatus && this.isRefreshing) {
-            this.isRefreshing = false;
-
-            cancelAnimationFrame(this.nextFrameId);
-            nextStatus.isPlaying = false;
-            nextStatus.isBuffering = false;
+            this.handlePause(nextStatus);
         }
 
         if (newStatus.isPlaying) {
@@ -550,6 +536,32 @@ class Animation extends Component {
 
         this.nextFrameId = requestAnimationFrame(this.refreshBound);
     }
+
+    handlePlay(nextStatus = {}) {
+        if (this.isRefreshing) return nextStatus;
+
+        this.isRefreshing = true;
+        nextStatus.isPlaying = true;
+        nextStatus.isBuffering = true;
+
+        this.props.clearKeyframes();
+
+        this.lastRefreshTs = performance.now();
+        this.nextFrameId = requestAnimationFrame(::this.refresh);
+
+        return nextStatus;
+    }
+
+    handlePause(nextStatus = {}) {
+        this.isRefreshing = false;
+
+        cancelAnimationFrame(this.nextFrameId);
+        nextStatus.isPlaying = false;
+        nextStatus.isBuffering = false;
+
+        return nextStatus;
+    }
+
 
     play() {
         this.setStatus({isPlaying: true, isBuffering: true});
