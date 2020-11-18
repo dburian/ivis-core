@@ -344,7 +344,7 @@ class Timeline extends Component {
     }
 
     componentDidMount() {
-        if (this.props.enabled) this.enable();
+        if (this.props.enabled && this.props.animationControl.seek) this.enable();
         window.addEventListener("resize", this.updateAxisRectBound);
 
         this.updateAxisRect();
