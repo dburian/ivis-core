@@ -73,7 +73,7 @@ class LineChartSection extends Component {
                     dataSourceKey={LINE_CHART_DATA_SOURCE_KEY}
                     config={config}
                     height={500}
-                    withTooltip
+                    withTooltip={false}
                 />
             </div>
         );

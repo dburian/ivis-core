@@ -177,7 +177,7 @@ class AreaChartSection extends Component {
                     dataSourceKey={areaChartDtSourceKey}
                     config={config}
                     height={500}
-                    withTooltip
+                    withTooltip={false}
                 />
             </div>
         );
