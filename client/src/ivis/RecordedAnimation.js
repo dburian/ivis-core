@@ -123,6 +123,8 @@ class GenericDataSource {
         this._reset();
     }
 
+    //TODO: refactor interface, only method for asking the last timestamp,
+    // canShiftTo, and if nextChunkQries.length > 0 can be determined from this
     getEmptyData() {
         const data = {};
         for (const sigSet of Object.values(this.sigSets)) {
