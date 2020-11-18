@@ -10,8 +10,8 @@ const exampleDirs = ['animation_1', 'animation_2', 'animation_3'].map(
 );
 const templates = [
     {
-        name: '[ANIMATION] Line and bar charts (Recorded)',
-        description: 'Template presenting the use of recorded animation in combination with line chart and bar chart.',
+        name: '[ANIMATION] Area and bar charts (Recorded)',
+        description: 'Template presenting the use of recorded animation in combination with area chart and bar chart.',
         type: 'jsx',
         state: 1,
         namespace: 1
