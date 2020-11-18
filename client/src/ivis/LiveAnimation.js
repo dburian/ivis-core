@@ -80,7 +80,7 @@ class LiveAnimation extends Component {
             <TimeContext
                 initialIntervalSpec={this.initialIntervalSpec}
             >
-                <AnimationDataAccess
+                <DataAccess
                     dataSources={this.props.dataSources}
 
                     render={childrenRender}
@@ -295,7 +295,7 @@ const dataSourceTypes = {
 };
 
 @withComponentMixins([intervalAccessMixin()])
-class AnimationDataAccess extends Component {
+class DataAccess extends Component {
     static propTypes = {
         dataSources: PropTypes.object.isRequired,
         render: PropTypes.func.isRequired,

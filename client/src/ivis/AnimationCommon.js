@@ -7,7 +7,6 @@ import styles from "./AnimationCommon.scss";
 export const AnimationStatusContext = React.createContext(null);
 export const AnimationControlContext = React.createContext(null);
 export const AnimationDataContext = React.createContext(null);
-export const AnimationDataAccessContext = React.createContext(null);
 
 export const withAnimationControl = createComponentMixin({
     contexts: [
