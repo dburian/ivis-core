@@ -174,7 +174,7 @@ function installPrerequisities {
 
             curl --silent --location https://rpm.nodesource.com/setup_13.x | bash -
 
-            yum -y install mariadb-server nodejs redis pwgen gcc-c++ make bzip2 java-1.8.0-openjdk git libXScrnSaver at-spi2-atk gtk3
+            yum -y install mariadb-server nodejs redis pwgen gcc-c++ make bzip2 java-1.8.0-openjdk git libXScrnSaver at-spi2-atk gtk3 hostname
             rpm -Uhv --force https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-6.6.1.rpm
             ;;
 
@@ -296,7 +296,7 @@ EOT
 
 function doForAllModules {
     # Install required node packages
-    for idx in client shared server test-embedd ivis-core/client ivis-core/server ivis-core/shared ivis-core/embedding; do
+    for idx in client shared server test-embedd ivis-core/client ivis-core/server ivis-core/shared ivis-core/embedding ./; do
         if [ -d $idx ]; then
             ($1 $idx)
         fi
@@ -326,7 +326,8 @@ function installHttpd {
             systemctl start httpd
             systemctl enable httpd
 
-            setsebool -P httpd_can_network_connect 1
+	    #enable SELinux first && set policy
+            #setsebool -P httpd_can_network_connect 1
 
             if [ "$firewallCmdExists" == "true" ]; then
                 # Enable SSL ports on the firewall
