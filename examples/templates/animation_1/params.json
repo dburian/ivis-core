@@ -186,8 +186,8 @@
         "type": "text"
     },
     {
-        "id": "linechart",
-        "label": "Line chart configuration",
+        "id": "areachart",
+        "label": "Area chart configuration",
         "type": "fieldset",
         "cardinality": "1..1",
         "children": [

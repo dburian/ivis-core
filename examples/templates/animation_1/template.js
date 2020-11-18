@@ -6,7 +6,7 @@ import {
     RecordedAnimation,
     OnelineLayout,
     animated,
-    LineChart,
+    AreaChart,
     SimpleBarChart,
     StaticLegend,
     withPanelConfig,
@@ -18,7 +18,7 @@ import {
 import PropTypes from 'prop-types';
 import styles from './styles.scss';
 
-const lineChartDtSourceKey = 'linechart_dt';
+const areaChartDtSourceKey = 'areachart_dt';
 const barChartDtSourceKey = 'barchart_dt';
 
 class PanelIntroduction extends Component {
@@ -159,8 +159,8 @@ class BarChartSection extends Component {
     }
 }
 
-const AnimatedLineChart = animated(LineChart);
-class LineChartSection extends Component {
+const AnimatedAreaChart = animated(AreaChart);
+class AreaChartSection extends Component {
     static propTypes = {
         config: PropTypes.object.isRequired,
     }
@@ -173,8 +173,8 @@ class LineChartSection extends Component {
 
         return (
             <div className="container-fluid">
-                <AnimatedLineChart
-                    dataSourceKey={lineChartDtSourceKey}
+                <AnimatedAreaChart
+                    dataSourceKey={areaChartDtSourceKey}
                     config={config}
                     height={500}
                     withTooltip
@@ -202,13 +202,13 @@ export default class Panel extends Component {
             })),
         };
 
-        const lineChartSigSets  = this.getPanelConfig(['linechart', 'sigSets']);
-        dataSources[lineChartDtSourceKey] = {
+        const areaChartSigSets  = this.getPanelConfig(['areachart', 'sigSets']);
+        dataSources[areaChartDtSourceKey] = {
             type: 'timeSeries',
             interpolation: cubicInterpolation,
 
-            signalAggs: ['min', 'max', 'avg'],
-            sigSets: lineChartSigSets,
+            signalAggs: ['max'],
+            sigSets: areaChartSigSets,
         }
 
 
@@ -257,8 +257,8 @@ export default class Panel extends Component {
                 <RecordedAnimation {...this.getAnimationConfig()}>
                     <TimeRangeSelector />
                     <OnelineLayout {...this.getControlsConfig()} />
-                    <LineChartSection
-                        config={this.getPanelConfig(['linechart'])}
+                    <AreaChartSection
+                        config={this.getPanelConfig(['areachart'])}
                     />
                     <hr />
                     <BarChartIntroduction

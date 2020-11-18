@@ -68,7 +68,7 @@ export class AreaChart extends Component {
         lineCurve: d3Shape.curveLinear
     }
 
-    createChart(base, signalSetsData, abs, xScale, yScales, points) {
+    createChart(base, signalSetsData, baseState, abs, xScale, yScales, points) {
         for (const sigSetConf of this.props.config.signalSets) {
             if (points[sigSetConf.cid]) {
                 for (const sigConf of sigSetConf.signals) {
