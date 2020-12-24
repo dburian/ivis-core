@@ -4,14 +4,14 @@ import React, {Component} from 'react';
 import moment from "moment";
 import {select, event} from "d3-selection";
 import {scaleTime, scaleLinear} from "d3-scale";
-import {zoom, zoomTransform} from "d3-zoom";
+import {zoom} from "d3-zoom";
 import {extent} from "d3-array";
 import {
     AnimationStatusContext,
     LiveAnimation,
     animated,
     withPanelConfig,
-    SimpleBarChart,
+    StaticBarChart,
     LineChart,
     OnelineLayout,
     linearInterpolation,
@@ -114,14 +114,13 @@ class CPU extends Component {
                     config={config}
                     height={300}
                     withBrush={false}
-                    withTooltip={false}
                 />
             </Frame>
         );
     }
 }
 
-const AnimatedBarChart = animated(SimpleBarChart);
+const AnimatedBarChart = animated(StaticBarChart);
 class Memory extends Component {
     static propTypes = {
         usedMemoryColor: PropTypes.object,

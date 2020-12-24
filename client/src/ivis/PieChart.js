@@ -42,6 +42,7 @@ class StaticPieChart extends Component {
         height: PropTypes.number.isRequired,
         margin: PropTypes.object,
         legendWidth: PropTypes.number,
+        legendHeight: PropTypes.number,
         legendPosition: PropTypes.number,
         legendRowClass: PropTypes.string
     }
@@ -63,6 +64,7 @@ class StaticPieChart extends Component {
             bottom: 5
         },
         legendWidth: 120,
+        legendHeight: 100,
         legendRowClass: 'col-12',
         legendPosition: LegendPosition.RIGHT
     }
@@ -125,26 +127,27 @@ class StaticPieChart extends Component {
         this.labelsSelection.attr('transform', `translate(${centerX},${centerY})`);
         this.msgSelection.attr('transform', `translate(${centerX},${centerY})`);
 
-        const radius = Math.min(innerWidth / 2, innerHeight / 2); //
+        const radius = Math.min(innerWidth / 2, innerHeight / 2);
         this.updateChart(radius);
     }
 
     updateChart(newRadius) {
         this.chartRadius = newRadius || this.chartRadius;
 
-        const getRawValue = (datum) => {
-            if (typeof datum.value === "number") return datum;
+        const getRawValue = (value) => {
+            if (typeof value === "number") return value;
             else {
                 let resValue = null;
-                if (datum.sigSetCid && datum.signalCid) resValue = this.props.data[datum.sigSetCid][datum.signalCid];
-                if (datum.agg && resValue) resValue = resValue[datum.agg];
+                if (this.props.data && value.sigSetCid && value.signalCid && value.agg) {
+                    resValue = this.props.data[value.sigSetCid][value.signalCid][value.agg];
+                }
 
                 return resValue;
             }
         };
 
-        const valueAccessor = (value) => {
-            const rawValue = getRawValue(value);
+        const valueAccessor = (entry) => {
+            const rawValue = getRawValue(entry.value);
             return typeof rawValue === "number" ? rawValue : 0;
         };
 
@@ -212,7 +215,7 @@ class StaticPieChart extends Component {
 
                     {this.props.legendPosition === LegendPosition.RIGHT &&
                     <g>
-                        <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" width={this.props.legendWidth} height="50" x={this.state.width - this.props.margin.right - this.props.legendWidth} y={this.props.margin.top}>
+                        <foreignObject requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" width={this.props.legendWidth} height={this.props.legendHeight} x={this.state.width - this.props.margin.right - this.props.legendWidth} y={this.props.margin.top}>
                             <StaticLegend config={this.props.config.arcs} structure={legendStructure} className={`${styles.legend} ${styles.legendRight}`} rowClassName={this.props.legendRowClass}/>
                         </foreignObject>
                     </g>

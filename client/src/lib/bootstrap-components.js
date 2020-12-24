@@ -124,7 +124,7 @@ export class ButtonDropdown extends Component {
         const menuClassName = 'dropdown-menu' + (props.menuClassName ? ' ' + props.menuClassName : '');
 
         return (
-            <div className="dropdown" className={className}>
+            <div className={className}>
                 <button type="button" className={buttonClassName} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     {props.label}
                 </button>

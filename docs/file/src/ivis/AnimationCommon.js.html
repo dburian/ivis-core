@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">src/ivis/AnimationCommon.js | ivis-core</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Just to make my dev environment a little easier to use."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="ivis-core"><meta property="twitter:description" content="Just to make my dev environment a little easier to use."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/dburian/ivis-core"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#ivis">ivis</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/ivis/LiveAnimation.js~LiveAnimation.html">LiveAnimation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/ivis/RecordedAnimation.js~RecordedAnimation.html">RecordedAnimation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-animated">animated</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-AnimationControlContext">AnimationControlContext</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-AnimationDataContext">AnimationDataContext</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-AnimationStatusContext">AnimationStatusContext</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-withAnimationControl">withAnimationControl</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-withAnimationData">withAnimationData</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-withAnimationStatus">withAnimationStatus</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#lib">lib</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/lib/animation-helpers.js~SigSetInterpolator.html">SigSetInterpolator</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-cubicInterpolation">cubicInterpolation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-expensiveCubicInterpolation">expensiveCubicInterpolation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-linearInterpolation">linearInterpolation</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/ivis/AnimationCommon.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/** @module AnimationCommon */
+import React, {Component} from &quot;react&quot;;
+import PropTypes from &quot;prop-types&quot;;
+
+import {withComponentMixins, createComponentMixin} from &quot;../lib/decorator-helpers&quot;;
+import styles from &quot;./AnimationCommon.scss&quot;;
+
+/**
+* Context defined by the {@link Animation} component containing animation&apos;s state.
+*/
+export const AnimationStatusContext = React.createContext(null);
+/** Context provided by the Animation component containing animation&apos;s control
+    * functions. */
+export const AnimationControlContext = React.createContext(null);
+/** Context provided by the Animation component containing the visualization
+ * data sets produced by Data sources.
+ *
+ * @category Context
+ *
+ */
+export const AnimationDataContext = React.createContext(null);
+
+export const withAnimationControl = createComponentMixin({
+    contexts: [
+        {context: AnimationStatusContext, propName: &apos;animationStatus&apos;},
+        {context: AnimationControlContext, propName: &apos;animationControl&apos;}
+    ]
+});
+
+export const withAnimationStatus = createComponentMixin({
+    contexts: [
+        {context: AnimationStatusContext, propName: &apos;animationStatus&apos;},
+    ]
+});
+
+export const withAnimationData = createComponentMixin({
+    contexts: [ {context: AnimationDataContext, propName: &apos;animationData&apos;} ]
+});
+
+
+
+/**
+ * Function
+ *
+ * @param Stationary visualization component.
+ * @return Animated version of given visualization component.
+ *
+ * @function
+ */
+export function animated(VisualizationComp) {
+    /**
+     * Component wrapping visualization component, displaying an overlay.
+     *
+     * @component
+     */
+    @withComponentMixins([withAnimationData, withAnimationStatus])
+    class AnimatedContent extends Component {
+        static propTypes = {
+            animationStatus: PropTypes.object.isRequired,
+            animationData: PropTypes.object.isRequired,
+            /**
+             * Key of the Data source, from which to receive data.
+             */
+            dataSourceKey: PropTypes.string.isRequired,
+
+            forwardRef: PropTypes.func,
+        }
+
+        constructor(props) {
+            super(props);
+
+            this.lastValidData = null;
+        }
+
+        render() {
+            const {
+                forwardRef,
+                dataSourceKey,
+                animationData,
+                animationStatus,
+                ...visualizationProps
+            } = this.props;
+
+            let message = null;
+            let withSpinner = false;
+
+            let data = (animationData &amp;&amp; animationData[dataSourceKey]) || this.lastValidData;
+
+            if (data !== null) {
+                this.lastValidData = data;
+            }
+
+            if (animationStatus.error) {
+                message = new String(animationStatus.error);
+            } else if (animationStatus.isBuffering) {
+                withSpinner = true;
+                message =  &quot;Loading...&quot;;
+            }
+
+            return (
+                &lt;div ref={node =&gt; this.containerNode = node} className={styles.animatedContainer}&gt;
+                    {message &amp;&amp;
+                        &lt;div className={styles.loadingOverlay}&gt;
+                            &lt;div className={styles.loadingMsgContainer}&gt;
+                                {withSpinner &amp;&amp;
+                                    &lt;div className={styles.loadingSpinner + &quot; spinner-border&quot;} role={&quot;status&quot;}&gt;
+                                        &lt;span className={&quot;sr-only&quot;}&gt;Loading&lt;/span&gt;
+                                    &lt;/div&gt;
+                                }
+                                &lt;span className={styles.loadingMsg}&gt;{message}&lt;/span&gt;
+                            &lt;/div&gt;
+                        &lt;/div&gt;
+                    }
+                    {data &amp;&amp; &lt;VisualizationComp {...visualizationProps} data={data} ref={forwardRef} /&gt;}
+                &lt;/div&gt;
+            );
+        }
+    }
+
+    return React.forwardRef(function AnimatedVisualization(props, ref) {
+        return &lt;AnimatedContent {...props} forwardRef={ref} /&gt;;
+    });
+}
+
+export * from &apos;../lib/animation-interpolations&apos;;
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

@@ -6,12 +6,13 @@ import {select, mouse} from "d3-selection";
 import {scaleLinear, scaleTime} from "d3-scale";
 import {format} from "d3-format";
 import {interpolateString} from "d3-interpolate";
+import moment from "moment";
+
 import styles from "./AnimationControls.scss";
 import {withAnimationControl} from "./AnimationCommon";
 import {withComponentMixins} from "../lib/decorator-helpers";
 import {Button, ButtonDropdown, Icon} from "../lib/bootstrap-components";
 import {intervalAccessMixin} from "./TimeContext";
-import moment from "moment";
 
 const defaultPlaybackSpeedSteps = [
     1,
@@ -190,7 +191,7 @@ class JumpBackwardButton extends Component {
 }
 
 @withComponentMixins([withAnimationControl])
-class ChangeSpeedButton extends Component {
+class ChangeSpeedDropdown extends Component {
     static propTypes = {
         animationControl: PropTypes.object.isRequired,
         animationStatus: PropTypes.object.isRequired,
@@ -328,9 +329,14 @@ class Timeline extends Component {
 
     componentDidUpdate(prevProps, prevState) {
         if ((this.props.enabled && !prevProps.enabled) ||
-            (this.props.animationControl.seek && !prevProps.animationControl.seek)) this.enable();
-        else if ((prevProps.enabled && !this.props.enabled) ||
-                (prevProps.animationControl.seek && !this.props.animationControl.seek)) this.disable();
+            (this.props.animationControl.seek && !prevProps.animationControl.seek)) {
+
+            this.enable();
+        } else if ((prevProps.enabled && !this.props.enabled) ||
+                (prevProps.animationControl.seek && !this.props.animationControl.seek)) {
+
+            this.disable();
+        }
 
         const prevIntvAbs = this.getIntervalAbsolute(prevProps);
         if (this.state.axisRect !== prevState.axisRect ||
@@ -583,21 +589,25 @@ class ButtonGroup extends Component {
         className: PropTypes.string,
     }
 
-    render() {
-        const comps = {
+    constructor() {
+        super();
+
+        this.comps = {
             jumpBackward: JumpBackwardButton,
             playPause: PlayPauseButton,
             stop: StopButton,
             jumpForward: JumpForwardButton,
-            changeSpeed: ChangeSpeedButton,
+            changeSpeed: ChangeSpeedDropdown,
         };
+    }
 
+    render() {
         return (
             <div role={"group"}
                 className={"btn-group " + styles.mediaButtonGroup + " " + (this.props.className || "")}>
                 {
-                    Object.keys(comps).filter(btnKey => btnKey in this.props && this.props[btnKey].visible).map(btnKey => {
-                        const Comp = comps[btnKey];
+                    Object.keys(this.comps).filter(btnKey => btnKey in this.props && this.props[btnKey].visible).map(btnKey => {
+                        const Comp = this.comps[btnKey];
 
                         return <Comp {...this.props[btnKey]} key={btnKey} />;
                     })
@@ -640,9 +650,7 @@ class OnelineLayout extends Component {
                     }
                     {timeline && timeline.visible &&
                         <div className={`col`}>
-                            <Timeline
-                                {...timeline}
-                            />
+                            <Timeline {...timeline} />
                         </div>
                     }
                 </div>
@@ -656,10 +664,12 @@ export {
     StopButton,
     JumpForwardButton,
     JumpBackwardButton,
-    ChangeSpeedButton,
+
+    ChangeSpeedDropdown,
+
+    Timeline,
 
     ButtonGroup,
-    Timeline,
 
     OnelineLayout,
 };

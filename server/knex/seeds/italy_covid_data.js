@@ -30,9 +30,9 @@ async function loadJSONFromCsv(url) {
 
 //Using csvs instead of jsons, because jsons were outdated.
 const urls = {
-    index: 'https://open-covid-19.github.io/data/v2/index.csv',
-    demographics: 'https://open-covid-19.github.io/data/v2/demographics.csv',
-    epidemiology: 'https://open-covid-19.github.io/data/v2/epidemiology.csv',
+    index: 'https://storage.googleapis.com/covid19-open-data/v2/index.csv',
+    demographics: 'https://storage.googleapis.com/covid19-open-data/v2/demographics.csv',
+    epidemiology: 'https://storage.googleapis.com/covid19-open-data/v2/epidemiology.csv',
 };
 
 async function createSigSet(knex, sigSetCid, data, population, regionName) {

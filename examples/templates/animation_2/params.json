@@ -176,16 +176,6 @@
         ]
     },
     {
-        "id": "pageHeader",
-        "label": "Page header",
-        "type": "string"
-    },
-    {
-        "id": "pageDesc",
-        "label": "Page description",
-        "type": "text"
-    },
-    {
         "id": "lineChart",
         "label": "Configuration of line chart",
         "type": "fieldset",
@@ -243,16 +233,6 @@
         "cardinality": "1..1",
         "children": [
             {
-                "id": "chartLabel",
-                "label": "Pie chart label",
-                "type": "string"
-            },
-            {
-                "id": "chartDesc",
-                "label": "Pie chart description",
-                "type": "text"
-            },
-            {
                 "id": "sectors",
                 "label": "Pie chart sectors",
                 "type": "fieldset",
@@ -267,11 +247,6 @@
                         "id": "label",
                         "label": "Sector label",
                         "type": "string"
-                    },
-                    {
-                        "id": "desc",
-                        "label": "Sector description",
-                        "type": "text"
                     },
                     {
                         "id": "color",

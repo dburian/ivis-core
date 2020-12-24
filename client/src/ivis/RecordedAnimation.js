@@ -1,4 +1,9 @@
 import React, {Component} from "react";
+import moment from "moment";
+import _ from "lodash";
+import PropTypes from "prop-types";
+import {bisector} from "d3-array";
+
 import {
     AnimationStatusContext,
     AnimationControlContext,
@@ -10,10 +15,6 @@ import {DataAccessSession} from "./DataAccess";
 import {withComponentMixins} from "../lib/decorator-helpers";
 import {intervalAccessMixin, TimeContext} from "./TimeContext";
 import {IntervalSpec} from "./TimeInterval";
-import {bisector} from "d3-array";
-import moment from "moment";
-import _ from "lodash";
-import PropTypes from "prop-types";
 
 
 //When the tab is inactive, requests for animation frames are slowed down to 1
@@ -38,13 +39,8 @@ class RecordedAnimation extends Component {
     }
 
     static defaultProps = {
-        initialIntervalSpec: new IntervalSpec('now-6d', 'now', null, null),
-        intervalConfigPath: ['animationTimeContext'],
-        initialStatus: {
-            isPlaying: false,
-            playbackSpeedFactor: 1,
-            position: null,
-        },
+        initialIntervalSpec: new IntervalSpec('now-7d', 'now', null, null),
+        initialStatus: {},
     }
 
     render() {
@@ -66,7 +62,7 @@ class RecordedAnimation extends Component {
                 getMinAggregationInterval={this.props.defaultGetMinAggregationInterval}
             >
 
-                <DataAccess
+                <AnimationDataAccess
                     dataSources={this.props.dataSources}
                     render={childrenRender}
                 />
@@ -123,8 +119,6 @@ class GenericDataSource {
         this._reset();
     }
 
-    //TODO: refactor interface, only method for asking the last timestamp,
-    // canShiftTo, and if nextChunkQries.length > 0 can be determined from this
     getEmptyData() {
         const data = {};
         for (const sigSet of Object.values(this.sigSets)) {
@@ -492,8 +486,12 @@ class TimeSeriesDataSource {
             if (main.length === 0 || ts < main[0].ts.valueOf()) {
                 const shiftedData = {main: []};
 
-                if (sigSet.data.prev && sigSet.data.prev.ts.valueOf() > ts) {
+                if (sigSet.data.prev && sigSet.data.prev.ts.valueOf() < ts) {
                     shiftedData.prev = sigSet.data.prev;
+
+                    sigSet.intp.rebuildArgs([sigSet.data.prev, ...main.slice(0, arity - 1)]);
+                    shiftedData.main.push({ts: moment(ts), data: sigSet.intp.interpolate(ts)});
+                    sigSet.intp.hasCachedArgs = false;
                 }
 
                 data[sigSet.cid] = shiftedData;
@@ -616,7 +614,7 @@ const dataSources = {
 };
 
 @withComponentMixins([intervalAccessMixin()])
-class DataAccess extends Component {
+class AnimationDataAccess extends Component {
     static propTypes = {
         dataSources: PropTypes.object.isRequired,
         render: PropTypes.func.isRequired,
@@ -824,10 +822,9 @@ class Animation extends Component {
             return;
         }
 
-        const prevIntvSpec = this.getIntervalSpec(prevProps);
-        const currIntvSpec = this.getIntervalSpec();
-        const sameIntv = prevIntvSpec.from === currIntvSpec.from && prevIntvSpec.to === currIntvSpec.to;
-        if (!sameIntv) {
+        const prevIntvAbs = this.getIntervalAbsolute(prevProps);
+        const currIntvAbs = this.getIntervalAbsolute();
+        if (prevIntvAbs !== currIntvAbs) {
             this.seekHandler(this.getIntervalAbsolute().from.valueOf());
         } else if (this.props.needsReseek && !prevProps.needsReseek) {
             this.seekHandler(this.state.status.position);
@@ -847,7 +844,7 @@ class Animation extends Component {
 
     resetStatus(withUpdate) {
         const is = this.props.initialStatus;
-        const startingPos = is.position !== null && !Number.isNaN(is.position) ?
+        const startingPos = is.position != null && !Number.isNaN(is.position) ?
             this.clampPos(is.position) :
             this.getIntervalAbsolute().from.valueOf();
 

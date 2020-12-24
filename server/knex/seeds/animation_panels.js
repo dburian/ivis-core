@@ -10,22 +10,22 @@ const exampleDirs = ['animation_1', 'animation_2', 'animation_3'].map(
 );
 const templates = [
     {
-        name: '[ANIMATION] Area and bar charts (Recorded)',
-        description: 'Template presenting the use of recorded animation in combination with area chart and bar chart.',
+        name: 'Animated area and bar charts [Recorded]',
+        description: 'Template presenting a use case of Recorded animation in combination with area and bar charts.',
         type: 'jsx',
         state: 1,
         namespace: 1
     },
     {
-        name: '[ANIMATION] Svg graphic, line and pie charts (Recorded)',
-        description: 'Template presenting the use of recorded animation in combination with line chart, pie charts and custom SVG graphic.',
+        name: 'Animated SVG, line and pie charts [Recorded]',
+        description: 'Template presenting a use case of Recorded animation in combination with SVG graphic, line and pie charts.',
         type: 'jsx',
         state: 1,
         namespace: 1
     },
     {
-        name: '[ANIMATION] Svg graphic, line and bar charts (Live)',
-        description: 'Template presenting the use of custom live animation in combination with line chart, bar chart and SVG graphic.',
+        name: 'Animated live server monitoring [Live]',
+        description: 'Template presenting a use case of Live animation in combination with SVG graphic, line and bar chart s.',
         type: 'jsx',
         state: 1,
         namespace: 1
@@ -34,21 +34,21 @@ const templates = [
 const panels = [
     {
         name: 'COVID development in chosen districts',
-        description: 'Comparison of COVID development in various districts in Italy.',
+        description: 'Comparison of COVID development in various districts of Italy.',
         order: 1,
         template: 10,
         namespace: 1
     },
     {
         name: 'COVID testing in detail',
-        description: 'Comparison of testing results in various districts in Italy.',
+        description: 'Comparison of testing results in various districts of Italy.',
         order: 2,
         template: 11,
         namespace: 1
     },
     {
-        name: 'Live server information',
-        description: 'Live server information regarding the CPU, Memory and Disk.',
+        name: 'Live server monitoring',
+        description: 'Monitoring of Live server\'s resources such as the CPU load, memory statistics and disk load.',
         order: 3,
         template: 12,
         namespace: 1
@@ -62,10 +62,10 @@ const panel_paramsFN = 'panel_params.json';
 
 async function deleteOldPanels(knex) {
     await knex.transaction(async tx => {
-        //Deletes templates with name prefixed with '[ANIMATION]'
+        //Deletes templates with name prefixed with 'Animated'
         //Deletes workspace with the name 'Animation'
 
-        await tx('templates').where('name', 'like', '[ANIMATION]%').del();
+        await tx('templates').where('name', 'like', 'Animated%').del();
 
         const workspace = await tx('workspaces').where('name', 'Animation').first('id');
         if (workspace !== undefined) {
@@ -80,7 +80,7 @@ exports.seed = knex => (async() => {
 
     const workspaceId = await knex('workspaces').insert({
         name: 'Animation',
-        description: 'Workspace showcasing the use of animations in combination with various visualizations.',
+        description: 'Workspace showcasing three use cases of the Recorded and Live animations.',
         order: 1,
         namespace: 1
     });

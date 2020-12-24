@@ -23,6 +23,15 @@
   },
   "homepage": "https://github.com/dburian/ivis-core#readme",
   "devDependencies": {
+    "better-docs": "^2.3.2",
+    "cssnano": "^4.1.10",
+    "documentation": "^13.1.0",
+    "esdoc": "^1.1.0",
+    "esdoc-ecmascript-proposal-plugin": "^1.0.0",
+    "esdoc-jsx-plugin": "^1.0.0",
+    "esdoc-react-plugin": "^1.0.1",
+    "esdoc-standard-plugin": "^1.0.0",
+    "jsdoc": "^3.6.6",
     "nodemon": "^2.0.2"
   },
   "dependencies": {

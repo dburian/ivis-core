@@ -14,17 +14,14 @@ export const withAnimationControl = createComponentMixin({
         {context: AnimationControlContext, propName: 'animationControl'}
     ]
 });
-
 export const withAnimationStatus = createComponentMixin({
     contexts: [
         {context: AnimationStatusContext, propName: 'animationStatus'},
     ]
 });
-
 export const withAnimationData = createComponentMixin({
     contexts: [ {context: AnimationDataContext, propName: 'animationData'} ]
 });
-
 
 export function animated(VisualizationComp) {
     @withComponentMixins([withAnimationData, withAnimationStatus])

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href>
+  <title data-ice="title">Source | ivis-core</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Just to make my dev environment a little easier to use."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="ivis-core"><meta property="twitter:description" content="Just to make my dev environment a little easier to use."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/dburian/ivis-core"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#client-src-ivis">client/src/ivis</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~Animation.html">Animation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~DataAccess.html">DataAccess</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~GenericDataSource.html">GenericDataSource</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~LiveAnimation.html">LiveAnimation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~TimeSeriesDataSource.html">TimeSeriesDataSource</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~Animation.html">Animation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~AnimationDataAccess.html">AnimationDataAccess</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~GenericDataSource.html">GenericDataSource</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~RecordedAnimation.html">RecordedAnimation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~TimeSeriesDataSource.html">TimeSeriesDataSource</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-animated">animated</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-AnimationControlContext">AnimationControlContext</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-AnimationDataContext">AnimationDataContext</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-AnimationStatusContext">AnimationStatusContext</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-withAnimationControl">withAnimationControl</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-withAnimationData">withAnimationData</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-withAnimationStatus">withAnimationStatus</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-dataSourceTypes">dataSourceTypes</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-defaultPollRate">defaultPollRate</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-minPollRate">minPollRate</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-dataSources">dataSources</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-defaultMaxKeyframesStored">defaultMaxKeyframesStored</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-defaultMaxTimeFetched">defaultMaxTimeFetched</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-defaultPlaybackSpeedAggFactor">defaultPlaybackSpeedAggFactor</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-inactiveTabTimePillow">inactiveTabTimePillow</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#client-src-lib">client/src/lib</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/lib/animation-helpers.js~SigSetInterpolator.html">SigSetInterpolator</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-cubicSplineIntpFunction">cubicSplineIntpFunction</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getCubicSpline">getCubicSpline</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-linearIntpFunction">linearIntpFunction</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-cubicInterpolation">cubicInterpolation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-expensiveCubicInterpolation">expensiveCubicInterpolation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-getCubicSplineMemoized">getCubicSplineMemoized</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-linearInterpolation">linearInterpolation</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1>Source <img data-ice="coverageBadge" src="./badge.svg"><span data-ice="totalCoverageCount" class="total-coverage-count">4/194</span></h1>
+
+<table class="files-summary" data-ice="files" data-use-coverage="true">
+  <thead>
+    <tr>
+      <td>File</td>
+      <td>Identifier</td>
+      <td class="coverage">Document</td>
+      <td style="display: none;">Size</td>
+      <td style="display: none;">Lines</td>
+      <td style="display: none;">Updated</td>
+    </tr>
+  </thead>
+  <tbody>
+    
+  <tr data-ice="file">
+      <td data-ice="filePath"><span><a href="file/ivis-core/client/src/ivis/AnimationCommon.js.html#errorLines=23,30,36">ivis-core/client/src/ivis/AnimationCommon.js</a></span></td>
+      <td data-ice="identifier" class="identifiers"><span><a href="variable/index.html#static-variable-AnimationControlContext">AnimationControlContext</a></span>
+<span><a href="variable/index.html#static-variable-AnimationDataContext">AnimationDataContext</a></span>
+<span><a href="variable/index.html#static-variable-AnimationStatusContext">AnimationStatusContext</a></span>
+<span><a href="function/index.html#static-function-animated">animated</a></span>
+<span><a href="variable/index.html#static-variable-withAnimationControl">withAnimationControl</a></span>
+<span><a href="variable/index.html#static-variable-withAnimationData">withAnimationData</a></span>
+<span><a href="variable/index.html#static-variable-withAnimationStatus">withAnimationStatus</a></span></td>
+      <td class="coverage"><span data-ice="coverage">57 %</span><span data-ice="coverageCount" class="coverage-count">4/7</span></td>
+      <td style="display: none;" data-ice="size">4100 byte</td>
+      <td style="display: none;" data-ice="lines">128</td>
+      <td style="display: none;" data-ice="updated">2020-12-01 18:58:53 (UTC)</td>
+    </tr>
+<tr data-ice="file">
+      <td data-ice="filePath"><span><a href="file/ivis-core/client/src/ivis/LiveAnimation.js.html#errorLines=102,104,117,123,128,129,131,132,133,136,146,163,18,19,21,219,22,220,223,226,255,264,292,298,299,304,307,319,326,332,338,348,357,358,36,368,374,375,394,397,405,406,409,412,426,431,436,44,449,460,47,473,486,507,519,521,523,537,540,55,555,566,571,577,587,597,93,94,95">ivis-core/client/src/ivis/LiveAnimation.js</a></span></td>
+      <td data-ice="identifier" class="identifiers"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~Animation.html">Animation</a></span>
+<span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~DataAccess.html">DataAccess</a></span>
+<span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~GenericDataSource.html">GenericDataSource</a></span>
+<span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~LiveAnimation.html">LiveAnimation</a></span>
+<span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~TimeSeriesDataSource.html">TimeSeriesDataSource</a></span>
+<span><a href="variable/index.html#static-variable-dataSourceTypes">dataSourceTypes</a></span>
+<span><a href="variable/index.html#static-variable-defaultPollRate">defaultPollRate</a></span>
+<span><a href="variable/index.html#static-variable-minPollRate">minPollRate</a></span></td>
+      <td class="coverage"><span data-ice="coverage">0 %</span><span data-ice="coverageCount" class="coverage-count">0/69</span></td>
+      <td style="display: none;" data-ice="size">17301 byte</td>
+      <td style="display: none;" data-ice="lines">612</td>
+      <td style="display: none;" data-ice="updated">2020-12-02 16:27:19 (UTC)</td>
+    </tr>
+<tr data-ice="file">
+      <td data-ice="filePath"><span><a href="file/ivis-core/client/src/ivis/RecordedAnimation.js.html#errorLines=1003,103,126,134,143,144,147,204,219,22,24,25,250,26,28,281,29,296,307,323,344,351,365,379,398,40,416,417,418,420,431,432,469,470,480,484,50,539,548,549,550,578,605,608,611,617,618,623,626,636,638,642,649,659,686,687,690,701,733,743,753,758,764,765,768,777,78,783,784,79,797,80,800,814,815,816,819,82,835,839,846,875,882,892,897,902,907,911,915,921,934,936,937,979,981,987,990,995">ivis-core/client/src/ivis/RecordedAnimation.js</a></span></td>
+      <td data-ice="identifier" class="identifiers"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~Animation.html">Animation</a></span>
+<span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~AnimationDataAccess.html">AnimationDataAccess</a></span>
+<span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~GenericDataSource.html">GenericDataSource</a></span>
+<span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~RecordedAnimation.html">RecordedAnimation</a></span>
+<span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~TimeSeriesDataSource.html">TimeSeriesDataSource</a></span>
+<span><a href="variable/index.html#static-variable-dataSources">dataSources</a></span>
+<span><a href="variable/index.html#static-variable-defaultMaxKeyframesStored">defaultMaxKeyframesStored</a></span>
+<span><a href="variable/index.html#static-variable-defaultMaxTimeFetched">defaultMaxTimeFetched</a></span>
+<span><a href="variable/index.html#static-variable-defaultPlaybackSpeedAggFactor">defaultPlaybackSpeedAggFactor</a></span>
+<span><a href="variable/index.html#static-variable-inactiveTabTimePillow">inactiveTabTimePillow</a></span></td>
+      <td class="coverage"><span data-ice="coverage">0 %</span><span data-ice="coverageCount" class="coverage-count">0/98</span></td>
+      <td style="display: none;" data-ice="size">31962 byte</td>
+      <td style="display: none;" data-ice="lines">1018</td>
+      <td style="display: none;" data-ice="updated">2020-12-01 15:33:21 (UTC)</td>
+    </tr>
+<tr data-ice="file">
+      <td data-ice="filePath"><span><a href="file/ivis-core/client/src/lib/animation-helpers.js.html#errorLines=13,3,36,4,42,45,5,6,63,64,67,7,8">ivis-core/client/src/lib/animation-helpers.js</a></span></td>
+      <td data-ice="identifier" class="identifiers"><span><a href="class/ivis-core/client/src/lib/animation-helpers.js~SigSetInterpolator.html">SigSetInterpolator</a></span></td>
+      <td class="coverage"><span data-ice="coverage">0 %</span><span data-ice="coverageCount" class="coverage-count">0/13</span></td>
+      <td style="display: none;" data-ice="size">1897 byte</td>
+      <td style="display: none;" data-ice="lines">70</td>
+      <td style="display: none;" data-ice="updated">2020-10-01 10:45:43 (UTC)</td>
+    </tr>
+<tr data-ice="file">
+      <td data-ice="filePath"><span><a href="file/ivis-core/client/src/lib/animation-interpolations.js.html#errorLines=10,15,19,21,25,30,4">ivis-core/client/src/lib/animation-interpolations.js</a></span></td>
+      <td data-ice="identifier" class="identifiers"><span><a href="variable/index.html#static-variable-cubicInterpolation">cubicInterpolation</a></span>
+<span><a href="function/index.html#static-function-cubicSplineIntpFunction">cubicSplineIntpFunction</a></span>
+<span><a href="variable/index.html#static-variable-expensiveCubicInterpolation">expensiveCubicInterpolation</a></span>
+<span><a href="function/index.html#static-function-getCubicSpline">getCubicSpline</a></span>
+<span><a href="variable/index.html#static-variable-getCubicSplineMemoized">getCubicSplineMemoized</a></span>
+<span><a href="variable/index.html#static-variable-linearInterpolation">linearInterpolation</a></span>
+<span><a href="function/index.html#static-function-linearIntpFunction">linearIntpFunction</a></span></td>
+      <td class="coverage"><span data-ice="coverage">0 %</span><span data-ice="coverageCount" class="coverage-count">0/7</span></td>
+      <td style="display: none;" data-ice="size">709 byte</td>
+      <td style="display: none;" data-ice="lines">34</td>
+      <td style="display: none;" data-ice="updated">2020-07-02 13:30:25 (UTC)</td>
+    </tr>
+</tbody>
+</table>
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

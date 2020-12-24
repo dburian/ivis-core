@@ -55,11 +55,6 @@
                         "type": "boolean"
                     },
                     {
-                        "id": "enabled",
-                        "label": "Is enabled?",
-                        "type": "boolean"
-                    },
-                    {
                         "id": "positionFormatString",
                         "label": "Label format of current time and date",
                         "help": "Possible format tokens can be found at https://momentjs.com/docs/#/displaying/format/",

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>IVIS-CORE</h1>
+<h2>Introduction</h2>
+<p>IVIS-CORE project provides core components, and modules in order to develop and realize modern Web applications for data visualization, and analytics.</p>
+<p>IVIS is a framework built on Node.js (for server-side) and ReactJS (for client side). It uses mysql for long-term data storage and ElasticSearch for complex queries over time-series data. On the client, it uses the D3 library to build complex fully custom interactive visualizations.</p>
+<p>In particular, this project offers the visualization components (LineChart, AreaChart, OnOffAreaChart, PieChart) and other core functionalities at the client- and the server-side for the development of domain-specific applications through IVIS extensions.</p>
+<h2>Structure</h2>
+<p>This project consists of the client-, and the server-side modules. The client module provides all components (UI components, visualization), libraries, etc. that will be presented to the users of Web applications through Web browsers. While the server-side module provides all components, services, and libraries to operate security, database, searching, indexing, etc.</p>
+<h2>Technologies</h2>
+<p>IVIS-CORE has been realized on top of several technologies, in particular based on JavaScript ecosystem, as the following:</p>
+<ul>
+<li>Frontend:
+-- User Interface: Reactjs (a javascript library)
+-- User Interface Design: bootstrap
+-- Visualizations: D3 (a javascript library)
+-- JSX:</li>
+<li>Backend:
+-- IVIS routes, and API: NodeJS
+-- Database: MySQL
+-- Indexing &amp; Searching: ElasticSearch
+-- Security: Passport</li>
+</ul>
+<h2>Quick Start</h2>
+<h3>Preparation</h3>
+<p>The project creates three URL endpoints, which are referred to as &quot;trusted&quot;, &quot;sandbox&quot; and &quot;public&quot;. This allows IVIS
+to guarantee security and avoid XSS attacks in the multi-user settings. The function of these three endpoints is as follows:</p>
+<ul>
+<li><em>trusted</em> - This is the main endpoint for the UI that a logged-in user uses to manage lists, send campaigns, etc.</li>
+<li><em>sandbox</em> - This is an endpoint not directly visible to a user. It is used to host user-defined panels.</li>
+<li><em>API</em> - This is an endpoint for subscribers. It is used to host subscription management forms, files and archive.</li>
+</ul>
+<p>The recommended deployment of IVIS is to use 3 DNS entries that all points to the <strong>same</strong> IP address. For example as follows:</p>
+<ul>
+<li><em>ivis.example.com</em> - trusted endpoint (A record <code>ivis</code> under <code>example.com</code> domain)</li>
+<li><em>sbox.ivis.example.com</em> - sandbox endpoint (CNAME record <code>sbox.ivis</code> under <code>example.com</code> domain that points to <code>ivis</code>)</li>
+<li><em>api.ivis.example.com</em> - public endpoint (CNAME record <code>api.ivis</code> under <code>example.com</code> domain that points to <code>ivis</code>)</li>
+</ul>
+<h3>Installation on fresh CentOS 8, CentOS 7 or Ubuntu 18.04 LTS (public website secured by SSL)</h3>
+<p>This will setup a publicly accessible IVIS instance. Endpoints trusted and sandbox will provide both HTTP (on port 80)
+and HTTPS (on port 443). The HTTP ports just issue HTTP redirect to their HTTPS counterparts. The API endpoit will be
+available only via HTTPS.</p>
+<p>The script below will also acquire a valid certificate from <a href="https://letsencrypt.org/">Let's Encrypt</a>.
+If you are hosting IVIS on AWS or some other cloud provider, make sure that <strong>before</strong> running the installation
+script you allow inbound connection to ports 80 (HTTP) and 443 (HTTPS).</p>
+<p><strong>Note,</strong> that this will automatically accept the Let's Encrypt's Terms of Service.
+Thus, by running this script below, you agree with the Let's Encrypt's Terms of Service (https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf).</p>
+<ol>
+<li>
+<p>Login as root. (We had some problems running npm as root on CentOS 7 on AWS. This seems to be fixed by the seemingly extraneous <code>su</code> within <code>sudo</code>.)</p>
+<pre class="prettyprint source"><code>sudo su -
+</code></pre>
+</li>
+<li>
+<p>Install GIT</p>
+<p>For CentOS 8 type:</p>
+<pre class="prettyprint source"><code>dnf install -y git
+</code></pre>
+<p>For CentOS 7 type:</p>
+<pre class="prettyprint source"><code>yum install -y git
+</code></pre>
+<p>For Ubuntu 18.04 LTS type</p>
+<pre class="prettyprint source"><code>apt-get install -y git
+</code></pre>
+</li>
+<li>
+<p>Download IVIS using git to the <code>/opt/ivis-core</code> directory</p>
+<pre class="prettyprint source"><code>cd /opt
+git clone https://github.com/smartarch/ivis-core.git
+cd ivis-core
+</code></pre>
+</li>
+<li>
+<p>Run the installation script. Replace the urls and your email address with the correct values. <strong>NOTE</strong> that running this script you agree
+Let's Encrypt's conditions.</p>
+<p>For CentOS 8 type:</p>
+<pre class="prettyprint source"><code>bash setup/install-centos8-https.sh ivis.example.com sbox.ivis.example.com api.ivis.example.com admin@example.com
+</code></pre>
+<p>For CentOS 7 type:</p>
+<pre class="prettyprint source"><code>bash setup/install-centos7-https.sh ivis.example.com sbox.ivis.example.com api.ivis.example.com admin@example.com
+</code></pre>
+<p>For Ubuntu 18.04 LTS type:</p>
+<pre class="prettyprint source"><code>bash setup/install-ubuntu1804-https.sh ivis.example.com sbox.ivis.example.com api.ivis.example.com admin@example.com
+</code></pre>
+</li>
+<li>
+<p>Start IVIS and enable to be started by default when your server starts.</p>
+<pre class="prettyprint source"><code>systemctl start ivis-core
+systemctl enable ivis-core
+</code></pre>
+</li>
+<li>
+<p>Open the trusted endpoint (like <code>https://ivis.example.com</code>)</p>
+</li>
+<li>
+<p>Authenticate as <code>admin</code>:<code>test</code></p>
+</li>
+<li>
+<p>Update your password under Account/Profile</p>
+</li>
+</ol>
+<h3>Installation on fresh CentOS 8, CentOS 7 or Ubuntu 18.04 LTS (local installation)</h3>
+<p>This will setup a locally accessible IVIS instance (primarily for development and testing).
+All endpoints (trusted, sandbox, public) will provide only HTTP as follows:</p>
+<ul>
+<li>http://localhost:8080 - trusted endpoint</li>
+<li>http://localhost:8081 - sandbox endpoint</li>
+<li>http://localhost:8082 - api endpoint</li>
+</ul>
+<ol>
+<li>
+<p>Login as root. (We had some problems running npm as root on CentOS 7 on AWS. This seems to be fixed by the seemingly extraneous <code>su</code> within <code>sudo</code>.)</p>
+<pre class="prettyprint source"><code>sudo su -
+</code></pre>
+</li>
+<li>
+<p>Install GIT</p>
+<p>For CentOS 8 type:</p>
+<pre class="prettyprint source"><code>dnf install -y git
+</code></pre>
+<p>For CentOS 7 type:</p>
+<pre class="prettyprint source"><code>yum install -y git
+</code></pre>
+<p>For Ubuntu 18.04 LTS type</p>
+<pre class="prettyprint source"><code>apt-get install -y git
+</code></pre>
+</li>
+<li>
+<p>Download IVIS using git to the <code>/opt/ivis-core</code> directory</p>
+<pre class="prettyprint source"><code>cd /opt
+git clone https://github.com/smartarch/ivis-core.git
+cd ivis-core
+</code></pre>
+</li>
+<li>
+<p>Run the installation script.</p>
+<p>For CentOS 8 type:</p>
+<pre class="prettyprint source"><code>bash setup/install-centos8-local.sh
+</code></pre>
+<p>For CentOS 7 type:</p>
+<pre class="prettyprint source"><code>bash setup/install-centos7-local.sh
+</code></pre>
+<p>For Ubuntu 18.04 LTS type:</p>
+<pre class="prettyprint source"><code>bash setup/install-ubuntu1804-local.sh
+</code></pre>
+</li>
+<li>
+<p>Start IVIS and enable to be started by default when your server starts.</p>
+<pre class="prettyprint source"><code>systemctl start ivis-core
+systemctl enable ivis-core
+</code></pre>
+</li>
+<li>
+<p>Open the trusted endpoint (like <code>http://localhost:3000</code>)</p>
+</li>
+<li>
+<p>Authenticate as <code>admin</code>:<code>test</code></p>
+</li>
+<li>
+<p>Update your password under Account/Profile</p>
+</li>
+</ol>
+<h2>License</h2>
+<p><strong>MIT</strong></p></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AnimationCommon.html">AnimationCommon</a></li></ul><h3>Classes</h3><ul><li><a href="module-AnimationCommon-AnimatedContent.html">AnimatedContent</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Dec 20 2020 20:28:56 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

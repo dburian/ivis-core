@@ -1,7 +1,10 @@
 import React, {Component} from "react";
+import PropTypes from "prop-types";
+import moment from "moment";
+import _ from "lodash";
+
 import axios from "../lib/axios";
 import {getUrl} from "../lib/urls";
-import PropTypes from "prop-types";
 import {
     AnimationStatusContext,
     AnimationControlContext,
@@ -12,8 +15,6 @@ import {withAsyncErrorHandler} from "../lib/error-handling";
 import {withComponentMixins} from "../lib/decorator-helpers";
 import {intervalAccessMixin, TimeContext} from "./TimeContext";
 import {IntervalSpec} from "./TimeInterval";
-import moment from "moment";
-import _ from "lodash";
 
 const defaultPollRate = 1000;
 const minPollRate = 50;
@@ -80,7 +81,7 @@ class LiveAnimation extends Component {
             <TimeContext
                 initialIntervalSpec={this.initialIntervalSpec}
             >
-                <DataAccess
+                <AnimationDataAccess
                     dataSources={this.props.dataSources}
 
                     render={childrenRender}
@@ -295,7 +296,7 @@ const dataSourceTypes = {
 };
 
 @withComponentMixins([intervalAccessMixin()])
-class DataAccess extends Component {
+class AnimationDataAccess extends Component {
     static propTypes = {
         dataSources: PropTypes.object.isRequired,
         render: PropTypes.func.isRequired,

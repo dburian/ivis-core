@@ -4,7 +4,7 @@ import React, {Component} from 'react';
 import moment from 'moment';
 import {select, event} from 'd3-selection';
 import {scaleTime, scaleLinear} from 'd3-scale';
-import {zoom, zoomTransform} from 'd3-zoom';
+import {zoom} from 'd3-zoom';
 import {extent} from 'd3-array';
 import {
     AnimationStatusContext,
@@ -20,8 +20,10 @@ import {
     expensiveCubicInterpolation,
     TimeRangeSelector,
     SVG,
+    IntervalSpec,
 } from 'ivis';
 import PropTypes from 'prop-types';
+
 import styles from './styles.scss';
 
 const PIE_CHART_DATA_SOURCE_KEY = 'piechart_dt';
@@ -29,159 +31,6 @@ const LINE_CHART_DATA_SOURCE_KEY = 'linechart_dt';
 const SVG_CHART_DATA_SOURCE_KEY = 'svgchart_dt';
 
 const SVG_CHART_HISTORY = 1000*60*60*24*100;
-
-class PanelIntroduction extends Component {
-    static propTypes = {
-        header: PropTypes.string,
-        desc: PropTypes.string,
-    }
-
-    render() {
-
-        return (
-            <>
-                <div className="jumbotron rounded-lg mb-5 p-4">
-                    <h1 className="display-4 mb-5">
-                        {this.props.header}
-                    </h1>
-                    <p className="text-justify lead">
-                        {this.props.desc}
-                    </p>
-                </div>
-                <hr />
-            </>
-        );
-    }
-}
-
-const AnimatedLineChart = animated(LineChart);
-class LineChartSection extends Component {
-    static propTypes = {
-        config: PropTypes.object.isRequired,
-    }
-
-    render() {
-        const config = {
-            yAxes: [{visible: true, belowMin: 0.1, aboveMax: 0.2}],
-            signalSets: this.props.config.sigSets
-        };
-
-
-        return (
-            <div className="container-fluid">
-                <AnimatedLineChart
-                    dataSourceKey={LINE_CHART_DATA_SOURCE_KEY}
-                    config={config}
-                    height={500}
-                    withTooltip={false}
-                />
-            </div>
-        );
-    }
-}
-
-class PieChartIntroduction extends Component {
-    static propTypes = {
-        sectors: PropTypes.array.isRequired,
-        chartDesc: PropTypes.string.isRequired,
-        chartLabel: PropTypes.string.isRequired,
-    }
-
-    render() {
-        const renderSector = (sector) => {
-            return (
-                <div key={sector.id} className="callout" style={{borderColor: sector.color}}>
-                    <h5>{sector.label}</h5>
-                    <p className="text-justify">{sector.desc}</p>
-                </div>
-            );
-        };
-
-        return (
-            <div className="mb-5 p-4">
-                <h2 className="text-center mb-5">{this.props.chartLabel}</h2>
-                <p className="text-justify mb-2">
-                    {this.props.chartDesc}
-                </p>
-                <h5>Pie chart sectors:</h5>
-                {this.props.sectors.map(renderSector)}
-            </div>
-        );
-    }
-}
-
-class PieChartsSection extends Component {
-    static propTypes = {
-        sectors: PropTypes.array.isRequired,
-        dataSets: PropTypes.array.isRequired,
-    }
-
-    getPieChartsProps() {
-        const colors = {};
-        const labels = {};
-        for (const secConf of this.props.sectors) {
-            colors[secConf.id] = secConf.color;
-            labels[secConf.id] = secConf.label;
-        }
-
-        const pieChartProps = [];
-        for (const dtSet of this.props.dataSets) {
-            const arcs = [];
-            for(const sector of dtSet.sectors) {
-                arcs.push({
-                    color: colors[sector.sectorId],
-                    label: labels[sector.sectorId],
-                    sigSetCid: dtSet.sigSetCid,
-                    signalCid: sector.cid,
-                    agg: 'avg'
-                });
-            }
-
-            const props = {
-                key: dtSet.sigSetCid,
-                label: dtSet.name,
-                arcs,
-            };
-            pieChartProps.push(props);
-        }
-
-        return pieChartProps;
-    }
-
-    render() {
-        const pieChartsProps = this.getPieChartsProps();
-        return (
-            <div className="container-fluid">
-                <div className="row">
-                    {pieChartsProps.map(props => <SinglePieChartSection {...props} />)}
-                </div>
-            </div>
-        );
-    }
-}
-
-const AnimatedPieChart = animated(StaticPieChart);
-class SinglePieChartSection extends Component {
-    static propTypes = {
-        label: PropTypes.string,
-        arcs: PropTypes.array,
-    }
-
-    render() {
-        return (
-            <div className="col-6">
-                <h4 className="text-center">{this.props.label}</h4>
-                <AnimatedPieChart
-                    dataSourceKey={PIE_CHART_DATA_SOURCE_KEY}
-                    config={{arcs: this.props.arcs}}
-                    height={150}
-                    legendPosition={LegendPosition.BOTTOM}
-                    legendRowClass={"col " + styles.pieChartLegend}
-                />
-            </div>
-        );
-    }
-}
 
 class SVGChart extends Component {
     static propTypes = {
@@ -358,6 +207,106 @@ class SVGChart extends Component {
     }
 }
 
+
+const AnimatedLineChart = animated(LineChart);
+class LineChartSection extends Component {
+    static propTypes = {
+        config: PropTypes.object.isRequired,
+    }
+
+    render() {
+        const config = {
+            yAxes: [{visible: true, belowMin: 0.1, aboveMax: 0.2}],
+            signalSets: this.props.config.sigSets
+        };
+
+
+        return (
+            <div className="container-fluid">
+                <AnimatedLineChart
+                    dataSourceKey={LINE_CHART_DATA_SOURCE_KEY}
+                    config={config}
+                    height={500}
+                />
+            </div>
+        );
+    }
+}
+
+const AnimatedPieChart = animated(StaticPieChart);
+class PieChartsSection extends Component {
+    static propTypes = {
+        sectors: PropTypes.array.isRequired,
+        dataSets: PropTypes.array.isRequired,
+    }
+
+    getPieChartsProps() {
+        const colors = {};
+        const labels = {};
+        for (const secConf of this.props.sectors) {
+            colors[secConf.id] = secConf.color;
+            labels[secConf.id] = secConf.label;
+        }
+
+        const pieChartProps = [];
+        for (const dtSet of this.props.dataSets) {
+            const arcs = [];
+            for(const sector of dtSet.sectors) {
+                arcs.push({
+                    color: colors[sector.sectorId],
+                    label: labels[sector.sectorId],
+                    value: {
+                        sigSetCid: dtSet.sigSetCid,
+                        signalCid: sector.cid,
+                        agg: 'avg'
+                    }
+                });
+            }
+
+            const props = {
+                key: dtSet.sigSetCid,
+                label: dtSet.name,
+                arcs,
+            };
+            pieChartProps.push(props);
+        }
+
+        return pieChartProps;
+    }
+
+    render() {
+        const pieChartsProps = this.getPieChartsProps();
+        return (
+            <div className="container-fluid">
+                <div className="row">
+                    {pieChartsProps.map(props => <SinglePieChartSection {...props} />)}
+                </div>
+            </div>
+        );
+    }
+}
+class SinglePieChartSection extends Component {
+    static propTypes = {
+        label: PropTypes.string,
+        arcs: PropTypes.array,
+    }
+
+    render() {
+        return (
+            <div className="col-6">
+                <h4 className="text-center">{this.props.label}</h4>
+                <AnimatedPieChart
+                    dataSourceKey={PIE_CHART_DATA_SOURCE_KEY}
+                    config={{arcs: this.props.arcs}}
+                    height={150}
+                    legendPosition={LegendPosition.BOTTOM}
+                    legendRowClass={"col " + styles.pieChartLegend}
+                />
+            </div>
+        );
+    }
+}
+
 const AnimatedSVGChart = animated(SVGChart);
 class SVGChartSection extends Component {
     static propTypes = {
@@ -441,7 +390,8 @@ export default class Panel extends Component {
                 position: c.initialStatus.positionISO && moment.utc(c.initialStatus.positionISO).valueOf(),
                 playbackSpeedFactor: c.initialStatus.playbackSpeedFactor,
             },
-            dataSources
+            dataSources,
+            initialIntervalSpec: new IntervalSpec('now-1y', 'now', null, null)
         };
     }
 
@@ -471,34 +421,23 @@ export default class Panel extends Component {
         const sectors = this.getPanelConfig(['pieChart', 'sectors']);
 
         return (
-            <>
-                <PanelIntroduction
-                    header={this.getPanelConfig(['pageHeader'])}
-                    desc={this.getPanelConfig(['pageDesc'])}
-                />
+            <RecordedAnimation {...this.getAnimationConfig()}>
+                <TimeRangeSelector />
+                <OnelineLayout {...this.getControlsConfig()} />
 
-                <RecordedAnimation {...this.getAnimationConfig()}>
-                    <TimeRangeSelector />
-                    <OnelineLayout {...this.getControlsConfig()} />
-                    <LineChartSection
-                        config={this.getPanelConfig(['lineChart'])}
-                    />
-                    <hr />
-                    <PieChartIntroduction
-                        sectors={sectors}
-                        chartLabel={this.getPanelConfig(['pieChart', 'chartLabel'])}
-                        chartDesc={this.getPanelConfig(['pieChart', 'chartDesc'])}
-                    />
-                    <PieChartsSection
-                        sectors={sectors}
-                        dataSets={this.getPanelConfig(['pieChart', 'dataSets'])}
-                    />
-                    <hr />
-                    <SVGChartSection
-                        sigSets={this.getPanelConfig(['svgChart', 'sigSets'])}
-                    />
-                </RecordedAnimation>
-            </>
+                <LineChartSection
+                    config={this.getPanelConfig(['lineChart'])}
+                />
+                <hr />
+                <PieChartsSection
+                    sectors={sectors}
+                    dataSets={this.getPanelConfig(['pieChart', 'dataSets'])}
+                />
+                <hr />
+                <SVGChartSection
+                    sigSets={this.getPanelConfig(['svgChart', 'sigSets'])}
+                />
+            </RecordedAnimation>
         );
     }
 }

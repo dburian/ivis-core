@@ -17,11 +17,6 @@
                         "type": "boolean"
                     },
                     {
-                        "id": "positionISO",
-                        "label": "Position on load in ISO 8601 format",
-                        "type": "string"
-                    },
-                    {
                         "id": "playbackSpeedFactor",
                         "label": "Playback speed factor on load",
                         "type": "number"
@@ -176,16 +171,6 @@
         ]
     },
     {
-        "id": "pageHeader",
-        "label": "Page header",
-        "type": "string"
-    },
-    {
-        "id": "pageDesc",
-        "label": "Page description",
-        "type": "text"
-    },
-    {
         "id": "areachart",
         "label": "Area chart configuration",
         "type": "fieldset",
@@ -243,11 +228,6 @@
         "cardinality": "1..1",
         "children": [
             {
-                "id": "chartLabel",
-                "label": "Chart label",
-                "type": "string"
-            },
-            {
                 "id": "domainLabel",
                 "label": "Domain label",
                 "type": "string"
@@ -261,11 +241,6 @@
                 "id": "valueFormatSpecifier",
                 "label": "Codomain value specifier",
                 "type": "string"
-            },
-            {
-                "id": "chartDesc",
-                "label": "Chart description",
-                "type": "text"
             },
             {
                 "id": "categories",
@@ -282,11 +257,6 @@
                         "id": "label",
                         "label": "Category label",
                         "type": "string"
-                    },
-                    {
-                        "id": "desc",
-                        "label": "Category description",
-                        "type": "text"
                     },
                     {
                         "id": "color",

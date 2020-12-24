@@ -1,0 +1,20 @@
+{
+  "source": ".",
+  "destination": "./docs",
+  "includes": [
+    "AnimationCommon.js$",
+    "AnimationControls.js$",
+    "LiveAnimation.js$",
+    "RecordedAnimation.js$",
+    "animation-helpers.js$",
+    "animation-interpolations.js$"
+  ],
+  "plugins": [
+    {"name": "esdoc-standard-plugin", "option": {
+      "unexportedIdentifier": {"enable": true}
+    }},
+    {"name": "esdoc-jsx-plugin", "option": {"enable": true}},
+    {"name": "esdoc-react-plugin"},
+    {"name": "esdoc-ecmascript-proposal-plugin", "option": {"all": true}}
+  ]
+}

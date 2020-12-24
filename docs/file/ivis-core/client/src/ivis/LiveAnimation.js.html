@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../../../">
+  <title data-ice="title">ivis-core/client/src/ivis/LiveAnimation.js | ivis-core</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Just to make my dev environment a little easier to use."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="ivis-core"><meta property="twitter:description" content="Just to make my dev environment a little easier to use."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/dburian/ivis-core"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#client-src-ivis">client/src/ivis</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~Animation.html">Animation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~DataAccess.html">DataAccess</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~GenericDataSource.html">GenericDataSource</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~LiveAnimation.html">LiveAnimation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/LiveAnimation.js~TimeSeriesDataSource.html">TimeSeriesDataSource</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~Animation.html">Animation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~AnimationDataAccess.html">AnimationDataAccess</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~GenericDataSource.html">GenericDataSource</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~RecordedAnimation.html">RecordedAnimation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/ivis/RecordedAnimation.js~TimeSeriesDataSource.html">TimeSeriesDataSource</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-animated">animated</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-AnimationControlContext">AnimationControlContext</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-AnimationDataContext">AnimationDataContext</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-AnimationStatusContext">AnimationStatusContext</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-withAnimationControl">withAnimationControl</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-withAnimationData">withAnimationData</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-withAnimationStatus">withAnimationStatus</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-dataSourceTypes">dataSourceTypes</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-defaultPollRate">defaultPollRate</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-minPollRate">minPollRate</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-dataSources">dataSources</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-defaultMaxKeyframesStored">defaultMaxKeyframesStored</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-defaultMaxTimeFetched">defaultMaxTimeFetched</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-defaultPlaybackSpeedAggFactor">defaultPlaybackSpeedAggFactor</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-inactiveTabTimePillow">inactiveTabTimePillow</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#client-src-lib">client/src/lib</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/ivis-core/client/src/lib/animation-helpers.js~SigSetInterpolator.html">SigSetInterpolator</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-cubicSplineIntpFunction">cubicSplineIntpFunction</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-getCubicSpline">getCubicSpline</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-linearIntpFunction">linearIntpFunction</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-cubicInterpolation">cubicInterpolation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-expensiveCubicInterpolation">expensiveCubicInterpolation</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-getCubicSplineMemoized">getCubicSplineMemoized</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-linearInterpolation">linearInterpolation</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">ivis-core/client/src/ivis/LiveAnimation.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import React, {Component} from &quot;react&quot;;
+import axios from &quot;../lib/axios&quot;;
+import {getUrl} from &quot;../lib/urls&quot;;
+import PropTypes from &quot;prop-types&quot;;
+import {
+    AnimationStatusContext,
+    AnimationControlContext,
+    AnimationDataContext,
+} from &quot;./AnimationCommon&quot;;
+import {SigSetInterpolator} from &quot;../lib/animation-helpers&quot;;
+import {withAsyncErrorHandler} from &quot;../lib/error-handling&quot;;
+import {withComponentMixins} from &quot;../lib/decorator-helpers&quot;;
+import {intervalAccessMixin, TimeContext} from &quot;./TimeContext&quot;;
+import {IntervalSpec} from &quot;./TimeInterval&quot;;
+import moment from &quot;moment&quot;;
+import _ from &quot;lodash&quot;;
+
+const defaultPollRate = 1000;
+const minPollRate = 50;
+
+class LiveAnimation extends Component {
+    static propTypes = {
+        dataSources: PropTypes.object.isRequired,
+        animationId: PropTypes.string.isRequired,
+
+        intervalSpanBefore: PropTypes.object,
+        intervalSpanAfter: PropTypes.object,
+
+        initialStatus: PropTypes.object,
+
+        pollRate: PropTypes.number,
+
+        children: PropTypes.node,
+    }
+
+    static defaultProps = {
+        intervalSpanBefore: moment.duration(10, &apos;m&apos;),
+        intervalSpanAfter: moment.duration(3, &apos;m&apos;),
+
+        pollRate: defaultPollRate,
+        initialStatus: {isPlaying: false},
+    }
+
+    constructor(props) {
+        super(props);
+
+        this.initialIntervalSpec = new IntervalSpec(
+            moment(Date.now() - props.intervalSpanBefore.asMilliseconds()),
+            moment(Date.now() + props.intervalSpanAfter.asMilliseconds()),
+            null,
+            null
+        );
+    }
+
+    render() {
+        const pollRate = this.props.pollRate === null || Number.isNaN(this.props.pollRate) ?
+            minPollRate :
+            Math.max(minPollRate, this.props.pollRate)
+        ;
+
+
+        const childrenRender = (props) =&gt; {
+            return (
+                &lt;Animation
+                    animationId={this.props.animationId}
+                    pollRate={pollRate}
+
+                    intervalSpanBefore={this.props.intervalSpanBefore}
+                    intervalSpanAfter={this.props.intervalSpanAfter}
+
+                    initialStatus={this.props.initialStatus}
+                    {...props}&gt;
+                    {this.props.children}
+                &lt;/Animation&gt;
+            );
+        };
+
+
+        return (
+            &lt;TimeContext
+                initialIntervalSpec={this.initialIntervalSpec}
+            &gt;
+                &lt;DataAccess
+                    dataSources={this.props.dataSources}
+
+                    render={childrenRender}
+                /&gt;
+            &lt;/TimeContext&gt;
+        );
+    }
+}
+
+class GenericDataSource {
+    constructor(config, dataAccess) {
+        this.conf = {
+            formatData: config.formatData || null,
+            history: config.history || null,
+            intpArity: config.interpolation.arity,
+            signalAggs: config.signalAggs || [&apos;avg&apos;],
+        };
+
+        this.dataAccess = dataAccess;
+
+        this.sigSets = [];
+        for (const sigSetConf of config.sigSets) {
+            const signalCids = sigSetConf.signalCids;
+            this.sigSets.push({
+                cid: sigSetConf.cid,
+                signalCids,
+                intp: new SigSetInterpolator(signalCids, this.conf.signalAggs, config.interpolation),
+            });
+        }
+
+        this.clear();
+    }
+
+    addKeyframe(kf) {
+        const data = this.conf.formatData ? this.conf.formatData(kf.data) : kf.data;
+
+        this.buffer.push({ts: kf.ts, data});
+    }
+
+    clear() {
+        for (const sigSet of this.sigSets) {
+            sigSet.intp.clearArgs();
+        }
+
+        this.buffer = [];
+        this.history = [];
+
+        this.tss = [];
+        this.lastShiftNull = true;
+        this.kfPillow = 0;
+    }
+
+    getEmptyData() {
+        const emptyData = {};
+        for (const sigSet of this.sigSets) {
+            if (this.conf.history) emptyData[sigSet.cid] = [];
+            else emptyData[sigSet.cid] = sigSet.intp.interpolate(-1);
+        }
+
+        return emptyData;
+    }
+
+    shiftTo(ts) {
+        let minKfCount = this.conf.intpArity;
+
+        if (this.lastShiftNull) {
+            minKfCount += this.kfPillow;
+        }
+
+        const result = this._shiftTo(ts, minKfCount);
+
+        if (!this.lastShiftNull &amp;&amp; result === null) {
+            this.kfPillow += 1;
+        }
+        this.lastShiftNull = result === null;
+
+        return result;
+    }
+
+    _shiftTo(ts, minKfCount) {
+        if (this.buffer.length &lt; minKfCount) return null;
+
+        if (this.conf.history) {
+            const historyLastTs = this.history.length &gt; 0 ? this.history[this.history.length - 1].ts : -1;
+            let i = this.buffer.findIndex(kf =&gt; kf.ts &gt; historyLastTs);
+            while (i &gt;= 0 &amp;&amp; this.buffer.length &gt; i &amp;&amp; this.buffer[i].ts &lt; ts) {
+                this.history.push(this.buffer[i]);
+                i++;
+            }
+
+            const minTs = ts - this.conf.history;
+            const newHistoryStartIdx = this.history.findIndex(kf =&gt; kf.ts &gt;= minTs);
+            this.history.splice(0, newHistoryStartIdx);
+        }
+
+        const intpArity = this.conf.intpArity;
+        let kfsChanged = false;
+        while (this.buffer[intpArity - 1].ts &lt; ts &amp;&amp; this.buffer.length &gt; intpArity) {
+            const delCount = Math.min(
+                intpArity - 1,
+                this.buffer.length - intpArity
+            );
+            kfsChanged = true;
+
+            this.buffer.splice(0, delCount);
+        }
+
+        if (this.buffer[intpArity - 1].ts &lt; ts) return null;
+
+        const data = {};
+        const getSigSetKf = (cid, kf) =&gt; ({ts: kf.ts, data: kf.data[cid]});
+        for (const sigSet of this.sigSets) {
+            if (kfsChanged || !sigSet.intp.hasCachedArgs) {
+                const sigSetBuffer = [];
+                for (let i = 0; i &lt; intpArity; i++) {
+                    sigSetBuffer.push(getSigSetKf(sigSet.cid, this.buffer[i]));
+                }
+
+                sigSet.intp.rebuildArgs(sigSetBuffer);
+            }
+
+            const currentData = sigSet.intp.interpolate(ts);
+            if (this.conf.history) {
+                const sigSetHistory = this.history.map(kf =&gt; getSigSetKf(sigSet.cid, kf));
+                sigSetHistory.push({ts, data: currentData});
+                data[sigSet.cid] = sigSetHistory;
+            } else {
+                data[sigSet.cid] = currentData;
+            }
+        }
+
+        return data;
+    }
+}
+
+class TimeSeriesDataSource extends GenericDataSource{
+    constructor(config, dataAccess) {
+        super({...config}, dataAccess);
+
+        this.lastGenDataRev = [];
+    }
+
+    shiftTo(ts) {
+        const prevs = this._getPrevs();
+
+        const absIntv = this.dataAccess.getIntervalAbsolute();
+        this.conf.history = absIntv.to.valueOf() - absIntv.from.valueOf();
+
+        const genericData = super.shiftTo(ts);
+
+        if (genericData === null) return null;
+
+        const tsToMoment = (kf) =&gt; {
+            kf.ts = moment(kf.ts);
+            return kf;
+        };
+
+        const data = {};
+        for (const sigSet of this.sigSets) {
+            data[sigSet.cid] = {
+                main: genericData[sigSet.cid].map(tsToMoment),
+            };
+
+            if (prevs) {
+                data[sigSet.cid].prev = prevs[sigSet.cid];
+            }
+        }
+
+        return data;
+    }
+
+    getEmptyData() {
+        const emptyData = {};
+        for (const sigSet of this.sigSets) {
+            emptyData[sigSet.cid] = { main: [] };
+        }
+
+        return emptyData;
+    }
+
+    _getPrevs(ts) {
+        const findPrevIdx = arr =&gt; {
+            let i = 0;
+            while (i &lt; arr.length &amp;&amp; arr[i].ts &lt;= ts) i++;
+
+            if (i === arr.length || i === 0) return null;
+            else return i-1;
+        };
+
+        let prevIdx = findPrevIdx(this.history);
+        let arr = this.history;
+        if (prevIdx === null) {
+            prevIdx = findPrevIdx(this.buffer);
+            arr = this.buffer;
+        }
+
+        let prevs = null;
+        if (prevIdx !== null) {
+            prevs = {};
+            for (const sigSet of this.sigSets) {
+                prevs[sigSet.cid] = arr[prevIdx].data[sigSet.cid];
+            }
+        }
+
+        return prevs;
+    }
+}
+
+const dataSourceTypes = {
+    generic: GenericDataSource,
+    timeSeries: TimeSeriesDataSource,
+};
+
+@withComponentMixins([intervalAccessMixin()])
+class DataAccess extends Component {
+    static propTypes = {
+        dataSources: PropTypes.object.isRequired,
+        render: PropTypes.func.isRequired,
+    }
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            addKeyframe: ::this.addKeyframe,
+            clearKeyframes: ::this.clearKeyframes,
+            shiftTo: ::this.shiftTo,
+            getEmptyData: ::this.getEmptyData,
+
+            dataSources: props.dataSources,
+        };
+
+        this.resetDataSources();
+    }
+
+    componentDidUpdate(prevProps) {
+        if (!_.isEqual(this.props.dataSources, prevProps.dataSources)) {
+            this.resetDataSources();
+            this.setState({dataSources: this.props.dataSources});
+        }
+    }
+
+    addKeyframe(kf) {
+        for (const dtSrcKey of Object.keys(this.dataSources)) {
+            this.dataSources[dtSrcKey].addKeyframe(kf);
+        }
+    }
+
+    clearKeyframes() {
+        for (const dtSrcKey of Object.keys(this.dataSources)) {
+            this.dataSources[dtSrcKey].clear();
+        }
+    }
+
+    shiftTo(ts) {
+        const data = {};
+        for (const dtSrcKey of Object.keys(this.dataSources)) {
+            data[dtSrcKey] = this.dataSources[dtSrcKey].shiftTo(ts);
+            if (data[dtSrcKey] === null) return null;
+        }
+
+        return data;
+    }
+
+    getEmptyData() {
+        const data = {};
+        for (const dtSrcKey of Object.keys(this.dataSources)) {
+            data[dtSrcKey] = this.dataSources[dtSrcKey].getEmptyData();
+        }
+
+        return data;
+    }
+
+    resetDataSources() {
+        this.dataSources = {};
+        const dtSourceConfigs = this.props.dataSources;
+        for (const dtSrcKey of Object.keys(dtSourceConfigs)) {
+            const config = dtSourceConfigs[dtSrcKey];
+            const DataSourceType = dataSourceTypes[config.type];
+
+            this.dataSources[dtSrcKey] = new DataSourceType(config, this);
+        }
+    }
+
+    render() {
+        return this.props.render({...this.state});
+    }
+}
+
+@withComponentMixins([intervalAccessMixin()])
+class Animation extends Component {
+    static propTypes = {
+        pollRate: PropTypes.number.isRequired,
+        animationId: PropTypes.string.isRequired,
+
+        initialStatus: PropTypes.object.isRequired,
+
+        intervalSpanBefore: PropTypes.object.isRequired,
+        intervalSpanAfter: PropTypes.object.isRequired,
+
+        addKeyframe: PropTypes.func.isRequired,
+        clearKeyframes: PropTypes.func.isRequired,
+        shiftTo: PropTypes.func.isRequired,
+        getEmptyData: PropTypes.func.isRequired,
+
+        dataSources: PropTypes.object.isRequired,
+
+        children: PropTypes.node,
+    }
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            status: this.getInitStatus(),
+            controls: {
+                play: ::this.play,
+                pause: ::this.pause
+            },
+            animationData: props.getEmptyData(),
+        };
+        this.isRefreshing = false;
+        this.refreshBound = ::this.refresh;
+    }
+
+    componentDidUpdate(prevProps) {
+        if (this.props.pollRate !== prevProps.pollRate) {
+            clearInterval(this.fetchStatusInterval);
+            this.fetchStatusInterval = setInterval(::this.fetchStatus, this.props.pollRate);
+        }
+
+        if (this.props.animationId !== prevProps.animationId ||
+            this.props.dataSources !== prevProps.dataSources) {
+            this.masterReset();
+        }
+
+        if (this.props.intervalSpanBefore.asMilliseconds() !== prevProps.intervalSpanBefore.asMilliseconds()||
+            this.props.intervalSpanAfter.asMilliseconds() !== prevProps.intervalSpanAfter.asMilliseconds()) {
+            this.updateInterval();
+        }
+    }
+
+    componentDidMount() {
+        if (this.state.status.isPlaying) this.play();
+        this.fetchStatusInterval = setInterval(::this.fetchStatus, this.props.pollRate);
+    }
+
+    componentWillUnmount() {
+        cancelAnimationFrame(this.nextFrameId);
+        clearInterval(this.fetchStatusInterval);
+    }
+
+    masterReset() {
+        this.pause();
+
+        const initStatus = this.getInitStatus();
+        this.setStatus(initStatus);
+        if (initStatus.isPlaying) {
+            this.play();
+        }
+
+        this.props.clearKeyframes();
+        this.setState({animationData: this.props.getEmptyData()});
+    }
+
+    errorHandler(error) {
+        console.error(error);
+
+        cancelAnimationFrame(this.nextFrameId);
+        clearInterval(this.fetchStatusInterval);
+        this.setState({controls: {}});
+        this.setStatus({error});
+
+        return true;
+    }
+
+    getInitStatus() {
+        const initialStatus = this.props.initialStatus;
+
+        const newStatus = {
+            isBuffering: false,
+            isPlaying: !!initialStatus.isPlaying,
+            position: Date.now(),
+            playbackSpeedFactor: 1,
+        };
+
+        return newStatus;
+    }
+
+    updateInterval(currentPosition = this.state.status.position) {
+        const from = moment(currentPosition - this.props.intervalSpanBefore.asMilliseconds());
+        const to = moment(currentPosition + this.props.intervalSpanAfter.asMilliseconds());
+        const newSpec = new IntervalSpec(
+            from,
+            to,
+            null,
+            null
+        );
+
+        this.getInterval().setSpec(newSpec, true);
+    }
+
+    handleNewStatus(newStatus) {
+        const nextStatus = {};
+
+        if (newStatus.isPlaying &amp;&amp; !this.isRefreshing) {
+            nextStatus.position = newStatus.position;
+            this.handlePlay(nextStatus);
+        } else if (!newStatus &amp;&amp; this.isRefreshing) {
+            this.handlePause(nextStatus);
+        }
+
+        if (newStatus.isPlaying) {
+            const keyframe = { data: newStatus.data, ts: newStatus.position};
+
+            this.props.addKeyframe(keyframe);
+        }
+
+        if (Object.keys(nextStatus).length &gt; 0) {
+            this.setStatus(nextStatus);
+        }
+    }
+
+    setStatus(status) {
+        this.setState((prevState) =&gt; {
+            const newStatus = Object.assign({}, prevState.status, status);
+            if (newStatus.position !== prevState.status.position) {
+                this.updateInterval(newStatus.position);
+            }
+
+            return {status: newStatus};
+        });
+    }
+
+
+    refresh(elapsedTs) {
+        const interval = this.savedInterval || elapsedTs - this.lastRefreshTs;
+        this.savedInterval = null;
+
+        this.lastRefreshTs = performance.now();
+        const nextPosition = this.state.status.position + interval;
+
+        const data = this.props.shiftTo(nextPosition);
+
+        if (data === null) {
+            this.savedInterval = interval;
+            if (!this.state.status.isBuffering)
+                this.setStatus({isBuffering: true});
+        } else {
+            this.setState({animationData: data});
+            this.setStatus({position: nextPosition, isBuffering: false});
+        }
+
+        this.nextFrameId = requestAnimationFrame(this.refreshBound);
+    }
+
+    handlePlay(nextStatus = {}) {
+        if (this.isRefreshing) return nextStatus;
+
+        this.isRefreshing = true;
+        nextStatus.isPlaying = true;
+        nextStatus.isBuffering = true;
+
+        this.props.clearKeyframes();
+
+        this.lastRefreshTs = performance.now();
+        this.nextFrameId = requestAnimationFrame(::this.refresh);
+
+        return nextStatus;
+    }
+
+    handlePause(nextStatus = {}) {
+        this.isRefreshing = false;
+
+        cancelAnimationFrame(this.nextFrameId);
+        nextStatus.isPlaying = false;
+        nextStatus.isBuffering = false;
+
+        return nextStatus;
+    }
+
+
+    play() {
+        this.setStatus({isPlaying: true, isBuffering: true});
+        this.sendControlRequest(&quot;play&quot;);
+    }
+
+    pause() {
+        this.setStatus(this.handlePause());
+        this.sendControlRequest(&quot;pause&quot;);
+    }
+
+    @withAsyncErrorHandler
+    async sendControlRequest(controlName) {
+        const url = getUrl(&quot;rest/animation/&quot; + this.props.animationId + &quot;/&quot; + controlName);
+        const ctrlPromise = axios.post(url);
+
+        this.fetchStatus();
+
+        await ctrlPromise;
+    }
+
+    @withAsyncErrorHandler
+    async fetchStatus() {
+        const animationId = this.props.animationId;
+        const url = getUrl(&quot;rest/animation/&quot; + animationId + &quot;/status&quot;);
+        const res = await axios.get(url);
+
+        if (this.props.animationId === animationId) {
+            this.handleNewStatus(res.data);
+        }
+    }
+
+    render() {
+        return (
+            &lt;AnimationStatusContext.Provider value={this.state.status}&gt;
+                &lt;AnimationControlContext.Provider value={this.state.controls}&gt;
+                    &lt;AnimationDataContext.Provider value={this.state.animationData}&gt;
+                        {this.props.children}
+                    &lt;/AnimationDataContext.Provider&gt;
+                &lt;/AnimationControlContext.Provider&gt;
+            &lt;/AnimationStatusContext.Provider&gt;
+        );
+    }
+}
+
+export {
+    LiveAnimation
+};
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

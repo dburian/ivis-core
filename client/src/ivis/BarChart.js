@@ -1,360 +1,308 @@
-'use strict';
-
-import React, {Component} from "react";
-import * as d3Axis from "d3-axis";
-import * as d3Scale from "d3-scale";
-import * as d3Selection from "d3-selection";
-import * as d3Array from "d3-array";
-import * as d3Zoom from "d3-zoom";
-import * as d3Scheme from "d3-scale-chromatic";
-import {event as d3Event, select} from "d3-selection";
 import PropTypes from "prop-types";
-import {withErrorHandling} from "../lib/error-handling";
-import {withComponentMixins} from "../lib/decorator-helpers";
-import {withTranslation} from "../lib/i18n";
-import {PropType_d3Color, PropType_d3Color_Required, PropType_NumberInRange} from "../lib/CustomPropTypes";
-import {Tooltip} from "./Tooltip";
-import {extentWithMargin, transitionInterpolate, WheelDelta} from "./common";
-import styles from "./CorrelationCharts.scss";
+import React, {Component} from "react";
+import {max, extent, range} from "d3-array";
+import {scaleBand, scaleLinear} from "d3-scale";
+import {axisBottom, axisLeft} from "d3-axis";
+import {select} from "d3-selection";
 
-class TooltipContent extends Component {
-    constructor(props) {
-        super(props);
-    }
+import styles from "./BarChart.scss";
 
+export class StaticBarChart extends Component {
     static propTypes = {
         config: PropTypes.object.isRequired,
-        selection: PropTypes.object,
-    };
+        data: PropTypes.object,
 
-    render() {
-        if (this.props.selection) {
-            return (
-                <div>{this.props.selection.label}: {this.props.selection.value}</div>
-            );
+        codomainLabel: PropTypes.string,
+        domainLabel: PropTypes.string,
+        barPadding: PropTypes.number, //between 0 and 1
+        groupPadding: PropTypes.number, //between 0 and 1
 
-        } else {
-            return null;
-        }
+        withTickLines: PropTypes.bool,
+        withBarValues: PropTypes.bool,
+        isHorizontal: PropTypes.bool,
+
+        valueFormatSpecifier: PropTypes.string,
+
+        padding: PropTypes.object,
+        width: PropTypes.number,
+        height: PropTypes.number,
+        classNames: PropTypes.object,
     }
-}
-
-@withComponentMixins([
-    withTranslation,
-    withErrorHandling,
-])
-export class StaticBarChart extends Component {
-    constructor(props){
-        super(props);
-
-        const t = props.t;
-
-        this.state = {
-            statusMsg: t('Loading...'),
-            width: 0,
-            zoomTransform: d3Zoom.zoomIdentity,
-        };
-
-        this.zoom = null;
-
-        this.resizeListener = () => {
-            this.createChart(true);
-        };
-    }
-
-    static propTypes = {
-        config: PropTypes.shape({
-            bars: PropTypes.arrayOf(PropTypes.shape({
-                label: PropTypes.string.isRequired,
-                color: PropType_d3Color(),
-                value: PropTypes.number.isRequired
-            })).isRequired
-        }).isRequired,
-        height: PropTypes.number.isRequired,
-        margin: PropTypes.object,
-        padding: PropType_NumberInRange(0, 1),
-        colors: PropTypes.arrayOf(PropType_d3Color_Required()),
-
-        minValue: PropTypes.number,
-        maxValue: PropTypes.number,
-
-        withTooltip: PropTypes.bool,
-        withTransition: PropTypes.bool,
-        withZoom: PropTypes.bool,
-
-        zoomLevelMin: PropTypes.number,
-        zoomLevelMax: PropTypes.number,
-
-        className: PropTypes.string,
-        style: PropTypes.object
-    };
 
     static defaultProps = {
-        margin: { left: 40, right: 5, top: 5, bottom: 20 },
-        padding: 0.2,
-        minValue: 0,
-        colors: d3Scheme.schemeCategory10,
+        classNames: {},
+        padding: {
+            left: 40,
+            right: 40,
+            top: 20,
+            bottom: 40,
+        },
 
-        withTooltip: true,
-        withTransition: true,
-        withZoom: true,
-
-        zoomLevelMin: 1,
-        zoomLevelMax: 4,
-    };
-
-    componentDidMount() {
-        window.addEventListener('resize', this.resizeListener);
-        this.createChart(false, false);
+        barPadding: 0.05,
+        groupPadding: 0.2,
     }
 
-    /** Update and redraw the chart based on changes in React props and state */
-    componentDidUpdate(prevProps, prevState) {
-        const forceRefresh = this.prevContainerNode !== this.containerNode
-            || !Object.is(prevProps.config, this.props.config);
+    constructor(props) {
+        super(props);
 
-        const updateZoom = !Object.is(prevState.zoomTransform, this.state.zoomTransform);
+        this.state = {
+            width: props.width || null,
+            height: props.height || null,
+        };
 
-        this.createChart(forceRefresh, updateZoom);
-        this.prevContainerNode = this.containerNode;
+        this.resizeListener = ::this.updateBoundingRect;
+        this.nodeRefs = {};
+    }
+
+    componentDidUpdate() {
+        this.renderChart();
+    }
+
+    componentDidMount() {
+        if (this.state.width && this.state.height) this.renderChart();
+
+        this.resizeListener();
+        window.addEventListener('resize', this.resizeListener);
     }
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.resizeListener);
     }
 
-    /** Creates (or updates) the chart with current data.
-     * This method is called from componentDidUpdate automatically when state or config is updated.
-     * All the 'createChart*' methods are called from here. */
-    createChart(forceRefresh, updateZoom) {
-        const width = this.containerNode.getClientRects()[0].width;
-
-        if (this.state.width !== width)
-            this.setState({ width });
-
-        const widthChanged = width !== this.renderedWidth;
-        if (!forceRefresh && !widthChanged && !updateZoom) {
-            return;
-        }
-        this.renderedWidth = width;
-
-        if (this.props.config.bars.length === 0) {
-            this.statusMsgSelection.text(this.props.t('No data.'));
-
-            this.cursorAreaSelection
-                .on('mouseenter', null)
-                .on('mousemove', null)
-                .on('mouseleave', null);
-            this.zoom = null;
-            return;
-        }
-
-        //<editor-fold desc="Scales">
-        // x axis
-        const xSize = width - this.props.margin.left - this.props.margin.right;
-        const xExtent = this.props.config.bars.map(b => b.label);
-        const xScale = d3Scale.scaleBand()
-            .domain(xExtent)
-            .range([0, xSize].map(d => this.state.zoomTransform.applyX(d)))
-            .padding(this.props.padding);
-        const xAxis = d3Axis.axisBottom(xScale)
-            //.tickFormat(this.props.getLabel)
-            .tickSizeOuter(0);
-        this.xAxisSelection.call(xAxis);
-
-        // y axis
-        const ySize = this.props.height - this.props.margin.top - this.props.margin.bottom;
-        let yExtent = extentWithMargin(d3Array.extent(this.props.config.bars, b => b.value), 0.1);
-        if (this.props.minValue !== undefined)
-            yExtent[0] = this.props.minValue;
-        if (this.props.maxValue !== undefined)
-            yExtent[1] = this.props.maxValue;
-        const yScale = d3Scale.scaleLinear()
-            .domain(yExtent)
-            .range([ySize, 0]);
-        const yAxis = d3Axis.axisLeft(yScale)
-            .tickSizeOuter(0);
-        (this.props.withTransition ? this.yAxisSelection.transition() : this.yAxisSelection)
-            .call(yAxis);
-        //</editor-fold>
-
-        this.drawVerticalBars(this.props.config.bars, this.barsSelection, xScale, yScale);
-
-        // we don't want to change zoom object and cursor area when updating only zoom (it breaks touch drag)
-        if ((forceRefresh || widthChanged) && this.props.withZoom) {
-            this.createChartZoom(xSize, ySize);
-        }
-    }
-
-    /** Handles zoom of the chart by user using d3-zoom.
-     *  Called from this.createChart(). */
-    createChartZoom(xSize, ySize) {
-        const self = this;
-
-        const handleZoom = function () {
-            // noinspection JSUnresolvedVariable
-            if (self.props.withTransition && d3Event.sourceEvent && d3Event.sourceEvent.type === "wheel") {
-                transitionInterpolate(select(self), self.state.zoomTransform, d3Event.transform, setZoomTransform, () => {
-                    self.deselectBars();
-                });
-            } else {
-                // noinspection JSUnresolvedVariable
-                setZoomTransform(d3Event.transform);
-            }
-        };
-
-        const setZoomTransform = function (transform) {
-            self.setState({
-                zoomTransform: transform
-            });
-        };
-
-        const handleZoomEnd = function () {
-            self.deselectBars();
-            self.setState({
-                zoomInProgress: false
-            });
-        };
-        const handleZoomStart = function () {
-            self.setState({
-                zoomInProgress: true
-            });
-        };
-
-        const zoomExtent = [[0, 0], [xSize, ySize]];
-        const zoomExisted = this.zoom !== null;
-        this.zoom = zoomExisted ? this.zoom : d3Zoom.zoom();
-        this.zoom
-            .scaleExtent([this.props.zoomLevelMin, this.props.zoomLevelMax])
-            .translateExtent(zoomExtent)
-            .extent(zoomExtent)
-            .on("zoom", handleZoom)
-            .on("end", handleZoomEnd)
-            .on("start", handleZoomStart)
-            .wheelDelta(WheelDelta(2));
-        this.svgContainerSelection.call(this.zoom);
-    }
-
-    // noinspection JSCommentMatchesSignature
-    /** Draws the bars and also assigns them mouseover event handler to select them
-     * @param data          data in format of props.config.bars
-     * @param barsSelection d3 selection to which the data will get assigned and drawn
-     */
-    drawVerticalBars(data, barsSelection, xScale, yScale) {
-        const self = this;
-        const bars = barsSelection
-            .selectAll('rect')
-            .data(data, d => d.label);
-        const ySize = yScale.range()[0];
-        const barWidth = xScale.bandwidth();
-
-        const selectBar = function(bar = null) {
-            if (bar !== self.state.selection) {
-                self.highlightSelection
-                    .selectAll('rect')
-                    .remove();
-
-                if (bar !== null) {
-                    self.highlightSelection
-                        .append('rect')
-                        .attr('x', xScale(bar.label))
-                        .attr('y', yScale(bar.value))
-                        .attr("width", barWidth)
-                        .attr("height", ySize - yScale(bar.value))
-                        .attr("fill", "none")
-                        .attr("stroke", "black")
-                        .attr("stroke-width", "2px");
-                }
-            }
-
-            const containerPos = d3Selection.mouse(self.containerNode);
-            const mousePosition = {x: containerPos[0], y: containerPos[1]};
-
-            self.setState({
-                selection: bar,
-                mousePosition
-            });
-        };
-
-        const allBars = bars.enter()
-            .append('rect')
-            .attr('y', ySize)
-            .attr("height", 0)
-            .merge(bars)
-            .attr('x', d => xScale(d.label))
-            .attr("width", barWidth)
-            .attr("fill", (d, i) => d.color || this.getColor(i))
-            .on("mouseover", selectBar)
-            .on("mousemove", selectBar)
-            .on("mouseout", ::this.deselectBars);
-        (this.props.withTransition ?  allBars.transition() : allBars)
-            .attr('y', d => yScale(d.value))
-            .attr("height", d => ySize - yScale(d.value));
-
-        bars.exit()
-            .remove();
-    }
-
-    getColor(i) {
-        return this.props.colors[i % this.props.colors.length];
-    }
-
-    deselectBars() {
-        this.highlightSelection
-            .selectAll('rect')
-            .remove();
-
+    updateBoundingRect() {
+        const rect = this.nodeRefs.container.getClientRects()[0];
         this.setState({
-            selection: null,
-            mousePosition: null
+            width: rect.width,
+            height: rect.height,
         });
-    };
+    }
+
+    getHeight() {
+        return this.state.height - this.props.padding.top - this.props.padding.bottom;
+    }
+
+    getWidth() {
+        return this.state.width - this.props.padding.left - this.props.padding.right;
+    }
+
+    getRealSpaceFunc() {
+        //realSpace function helps abstract the possible rotation of the chart.
+        //This helps the chart-generating code to stay clean.
+
+        const isH = this.props.isHorizontal;
+
+        function Point(realX, realY) {
+            this.realX = realX;
+            this.realY = realY;
+        }
+
+        Point.prototype.toString = function() {return `${this.realX}, ${this.realY}`;};
+        Point.prototype.x = function() {return this.realX;};
+        Point.prototype.y = function() {return this.realY;};
+
+        const realSpace = (x, y) => {
+            if (isH) return new Point(y, x);
+            else return new Point(x, y);
+        };
+
+        realSpace.ifH = (ifHorizontal, ifNotHorizontal) => isH ? ifHorizontal : ifNotHorizontal;
+
+        realSpace.x = {
+            range: isH ? [this.getHeight(), 0] : [0, this.getWidth()],
+            name: isH ? "y" : "x",
+            axis: isH ? axisLeft : axisBottom,
+            axisNode: isH ? this.nodeRefs.leftAxis : this.nodeRefs.bottomAxis,
+        };
+
+        realSpace.y = {
+            range: isH ? [0, this.getWidth()] : [this.getHeight(), 0],
+            name: isH ? "x" : "y",
+            axis: isH ? axisBottom : axisLeft,
+            axisNode: isH ? this.nodeRefs.bottomAxis : this.nodeRefs.leftAxis,
+        };
+
+        return realSpace;
+    }
+
+    renderChart() {
+        const data = this.props.data;
+        const config = this.props.config;
+
+        const getRawValue = (value) => {
+            if (typeof value === "number") return value;
+            else {
+                let resValue = null;
+                if (data && value.sigSetCid && value.signalCid && value.agg) {
+                    resValue = data[value.sigSetCid][value.signalCid][value.agg];
+                }
+
+                return resValue;
+            }
+        };
+
+        const valueAccessor = (value) => {
+            const rawValue = getRawValue(value);
+            return typeof rawValue === "number" ? rawValue : 0;
+        };
+
+        const [minValue, maxValue] = extent([].concat(...config.groups.map(group => group.values)), valueAccessor);
+        const maxSubgroups = max(config.groups.map(group => group.values.length));
+
+        const rs = this.getRealSpaceFunc();
+
+
+        const x = scaleBand()
+            .domain(rs.ifH(range(config.groups.length).reverse(), range(config.groups.length)))
+            .range(rs.x.range)
+            .padding(this.props.groupPadding);
+
+        let domainMax = config.yAxis && config.yAxis.includeMax ?
+            Math.max(maxValue, config.yAxis.includeMax) : maxValue;
+        let domainMin = config.yAxis && config.yAxis.includeMin ?
+            Math.min(minValue, config.yAxis.includeMin) : minValue;
+
+        const domainWidth = domainMax - domainMin;
+
+        if (config.yAxis && config.yAxis.belowMin) {
+            domainMin -= domainWidth * config.yAxis.belowMin;
+        }
+
+        if (config.yAxis && config.yAxis.aboveMax) {
+            domainMax += domainWidth * config.yAxis.aboveMax;
+        }
+
+        const y = scaleLinear()
+            .domain([domainMin, domainMax])
+            .range(rs.y.range);
+
+        const valueFormatIfDef = this.props.valueFormatSpecifier ?
+            y.tickFormat(y.ticks(), this.props.valueFormatSpecifier) :
+            y.tickFormat()
+        ;
+
+        const valueFormat = (value) => {
+            const rawValue = getRawValue(value);
+            if (rawValue === null) return "No data";
+            else return valueFormatIfDef(rawValue);
+        };
+
+        const xSubgroups = scaleBand()
+            .domain(range(maxSubgroups))
+            .range([0, x.bandwidth()])
+            .padding(this.props.barPadding);
+
+
+        select(rs.x.axisNode)
+            .call(rs.x.axis(x).tickFormat(idx => config.groups[idx].label));
+
+        select(rs.y.axisNode)
+            .call(rs.y.axis(y).tickFormat(valueFormatIfDef))
+            .call(sel => sel.selectAll(".tickLine").remove())
+            .selectAll(".tick line").clone().classed("tickLine", true)
+            .attr(rs.x.name + "2", x.range()[1] - x.range()[0])
+            .attr("stroke-opacity", this.props.withTickLines ? 0.1 : 0);
+
+
+        const drawBars = rs.ifH(::this.drawHorizontalBars, ::this.drawVerticalBars);
+
+        drawBars(x, y, xSubgroups, valueAccessor, valueFormat, config.groups);
+    }
+
+    drawHorizontalBars(x, y, xSubgroups, valueAccessor, valueFormat, groups) {
+        const createBar = (sel) => sel.append("g").classed("bar", true)
+            .call(sel => sel.append("rect"))
+            .call(sel => sel.append("text")
+                .attr("font-size", 10)
+                .attr("font-family", "sans-serif")
+                .attr("font-weight", "bold")
+            );
+
+        select(this.nodeRefs.bars).selectAll(".group")
+            .data(groups)
+            .join(sel => sel.append("g").classed("group", true))
+            .attr("transform", (d, idx) => `translate(0, ${x(idx)})`)
+            .selectAll(".bar")
+            .data(d => d.values.map((value, idx) => ({value, color: d.colors[idx]})))
+            .join(createBar)
+            .attr("transform", (d, idx) => `translate(1,${xSubgroups(idx)})`)
+            .call(sel => sel.select("rect")
+                .attr("fill", d => d.color)
+                .attr("height", xSubgroups.bandwidth())
+                .attr("width", d => y(valueAccessor(d.value)))
+            )
+            .call(sel => sel.select("text")
+                .text(d => valueFormat(d.value))
+                .attr("y", xSubgroups.bandwidth()/2)
+                .attr("x", d => y(valueAccessor(d.value)))
+                .attr("dx", "1em")
+                .attr("dominant-baseline", "middle")
+                .attr("text-anchor", "start")
+                .attr("opacity", this.props.withBarValues ? 1 : 0)
+            );
+    }
+
+    drawVerticalBars(x, y, xSubgroups, valueAccessor, valueFormat, groups) {
+        const createBar = (sel) => sel.append("g").classed("bar", true)
+            .call(sel => sel.append("rect"))
+            .call(sel => sel.append("text")
+                .attr("font-size", 10)
+                .attr("font-family", "sans-serif")
+                .attr("font-weight", "bold")
+            );
+
+        select(this.nodeRefs.bars).selectAll(".group")
+            .data(groups)
+            .join(sel => sel.append("g").classed("group", true))
+            .attr("transform", (d, idx) => `translate(${x(idx)}, 0)`)
+            .selectAll(".bar")
+            .data(d => d.values.map((value, idx) => ({value, color: d.colors[idx]})))
+            .join(createBar)
+            .attr("transform", (d, idx) => `translate(${xSubgroups(idx)}, ${y(valueAccessor(d.value))})`)
+            .call(sel => sel.select("rect")
+                .attr("fill", d => d.color)
+                .attr("width", xSubgroups.bandwidth())
+                .attr("height", d => y.range()[0] - y(valueAccessor(d.value)))
+            )
+            .call(sel => sel.select("text")
+                .text(d => valueFormat(d.value))
+                .attr("x", xSubgroups.bandwidth()/2)
+                .attr("dy", "-2em")
+                .attr("dominant-baseline", "baseline")
+                .attr("text-anchor", "middle")
+                .attr("opacity", this.props.withBarValues ? 1 : 0)
+            );
+    }
 
     render() {
+        const height = this.getHeight();
+        const width = this.getWidth();
+
         return (
-            <div ref={node => this.svgContainerSelection = select(node)}
-                 className={this.props.className ? `${styles.touchActionNone} ${this.props.className}` : styles.touchActionNone}
-                 style={this.props.style} >
-                <svg id="cnt" ref={node => this.containerNode = node} height={this.props.height} width={"100%"}>
-                    <defs>
-                        <clipPath id="plotRect">
-                            <rect x="0" y="0" width={this.state.width - this.props.margin.left - this.props.margin.right}
-                                  height={this.props.height - this.props.margin.top - this.props.margin.bottom}/>
-                        </clipPath>
-                        <clipPath id="bottomAxis">
-                            <rect x={-6} y={0} width={this.state.width - this.props.margin.left - this.props.margin.right + 6}
-                                  height={this.props.margin.bottom} /* same reason for 6 as in HeatmapChart */ />
-                        </clipPath>
-                    </defs>
-                    <g transform={`translate(${this.props.margin.left}, ${this.props.margin.top})`}
-                       clipPath="url(#plotRect)">
-                        <g ref={node => this.barsSelection = select(node)}/>
-                        {!this.state.zoomInProgress &&
-                        <g ref={node => this.highlightSelection = select(node)}/>}
+            <>
+                <svg className={styles.simpleBarChart + " " + (this.props.classNames.container || "")}
+                    width={this.props.width} height={this.props.height}
+                    ref={node => this.nodeRefs.container = node} xmlns={"http://www.w3.org/2000/svg"}>
+
+                    <g ref={node => this.nodeRefs.content = node}
+                        transform={`translate(${this.props.padding.left}, ${this.props.padding.top})`}>
+
+                        <g ref={node => this.nodeRefs.leftAxis = node}>
+                            <text className={styles.y_axisLabel} dx={"0.3em"}>
+                                {this.props.isHorizontal ? this.props.domainLabel : this.props.codomainLabel}
+                            </text>
+                        </g>
+                        <g ref={node => this.nodeRefs.bottomAxis = node} transform={`translate(0,${height})`}>
+                            <text className={styles.x_axisLabel}
+                                dy={"-0.3em"} x={width}>
+                                {this.props.isHorizontal ? this.props.codomainLabel : this.props.domainLabel}
+                            </text>
+                        </g>
+
+                        <g ref={node => this.nodeRefs.bars = node} />
+
                     </g>
-                    <g ref={node => this.xAxisSelection = select(node)}
-                       transform={`translate(${this.props.margin.left}, ${this.props.height - this.props.margin.bottom})`}
-                       clipPath="url(#bottomAxis)"/>
-                    <g ref={node => this.yAxisSelection = select(node)}
-                       transform={`translate(${this.props.margin.left}, ${this.props.margin.top})`}/>
-                    <text ref={node => this.statusMsgSelection = select(node)} textAnchor="middle" x="50%" y="50%"
-                          fontFamily="'Open Sans','Helvetica Neue',Helvetica,Arial,sans-serif" fontSize="14px"/>
-                    {this.props.withTooltip && !this.state.zoomInProgress &&
-                    <Tooltip
-                        config={this.props.config}
-                        signalSetsData={this.props.config}
-                        containerHeight={this.props.height}
-                        containerWidth={this.state.width}
-                        mousePosition={this.state.mousePosition}
-                        selection={this.state.selection}
-                        contentRender={props => <TooltipContent {...props}/>}
-                        width={250}
-                    />
-                    }
-                    <g ref={node => this.cursorAreaSelection = select(node)}
-                       transform={`translate(${this.props.margin.left}, ${this.props.margin.top})`}/>
                 </svg>
-            </div>
+            </>
         );
     }
 }

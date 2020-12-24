@@ -7,75 +7,23 @@ import {
     OnelineLayout,
     animated,
     AreaChart,
-    SimpleBarChart,
+    StaticBarChart,
     StaticLegend,
     withPanelConfig,
     linearInterpolation,
     cubicInterpolation,
     expensiveCubicInterpolation,
     TimeRangeSelector,
+    IntervalSpec
 } from 'ivis';
 import PropTypes from 'prop-types';
+
 import styles from './styles.scss';
 
 const areaChartDtSourceKey = 'areachart_dt';
 const barChartDtSourceKey = 'barchart_dt';
 
-class PanelIntroduction extends Component {
-    static propTypes = {
-        header: PropTypes.string,
-        desc: PropTypes.string,
-    }
-
-    render() {
-
-        return (
-            <>
-                <div className="jumbotron rounded-lg mb-5 p-4">
-                    <h1 className="display-4 mb-5">
-                        {this.props.header}
-                    </h1>
-                    <p className="text-justify lead">
-                        {this.props.desc}
-                    </p>
-                </div>
-                <hr />
-            </>
-        );
-    }
-}
-
-class BarChartIntroduction extends Component {
-    static propTypes = {
-        categories: PropTypes.array.isRequired,
-        chartDesc: PropTypes.string.isRequired,
-        chartLabel: PropTypes.string.isRequired,
-    }
-
-    render() {
-        const renderCategory = (category) => {
-            return (
-                <div key={category.id} className="callout" style={{borderColor: category.color}}>
-                    <h5>{category.label}</h5>
-                    <p className="text-justify">{category.desc}</p>
-                </div>
-            );
-        };
-
-        return (
-            <div className="mb-5 p-4">
-                <h2 className="text-center mb-5">{this.props.chartLabel}</h2>
-                <p className="text-justify mb-2">
-                    {this.props.chartDesc}
-                </p>
-                <h5>Bar categories:</h5>
-                {this.props.categories.map(renderCategory)}
-            </div>
-        );
-    }
-}
-
-const AnimatedBarChart = animated(SimpleBarChart);
+const AnimatedBarChart = animated(StaticBarChart);
 class BarChartSection extends Component {
     static propTypes = {
         categories: PropTypes.array,
@@ -177,7 +125,6 @@ class AreaChartSection extends Component {
                     dataSourceKey={areaChartDtSourceKey}
                     config={config}
                     height={500}
-                    withTooltip={false}
                 />
             </div>
         );
@@ -215,10 +162,10 @@ export default class Panel extends Component {
         return {
             initialStatus: ac.initialStatus && {
                 isPlaying: !!ac.initialStatus.isPlaying,
-                position: ac.initialStatus.positionISO && moment.utc(ac.initialStatus.positionISO).valueOf(),
                 playbackSpeedFactor: ac.initialStatus.playbackSpeedFactor,
             },
-            dataSources
+            dataSources,
+            initialIntervalSpec: new IntervalSpec('2020-02-20 00:00:00', 'now', null, null),
         };
     }
 
@@ -245,36 +192,21 @@ export default class Panel extends Component {
     }
 
     render() {
-        const categories = this.getPanelConfig(['barchart', 'categories']);
-
         return (
-            <>
-                <PanelIntroduction
-                    header={this.getPanelConfig(['pageHeader'])}
-                    desc={this.getPanelConfig(['pageDesc'])}
-                />
+            <RecordedAnimation {...this.getAnimationConfig()}>
+                <TimeRangeSelector />
+                <OnelineLayout {...this.getControlsConfig()} />
 
-                <RecordedAnimation {...this.getAnimationConfig()}>
-                    <TimeRangeSelector />
-                    <OnelineLayout {...this.getControlsConfig()} />
-                    <AreaChartSection
-                        config={this.getPanelConfig(['areachart'])}
+                <AreaChartSection config={this.getPanelConfig(['areachart'])} />
+                <hr />
+                <BarChartSection
+                    domainLabel={this.getPanelConfig(['barchart', 'domainLabel'])}
+                    codomainLabel={this.getPanelConfig(['barchart', 'codomainLabel'])}
+                    valueFormatSpecifier={this.getPanelConfig(['barchart', 'valueFormatSpecifier'])}
+                    categories={this.getPanelConfig(['barchart', 'categories'])}
+                    dataSets={this.getPanelConfig(['barchart', 'dataSets'])}
                     />
-                    <hr />
-                    <BarChartIntroduction
-                        categories={categories}
-                        chartLabel={this.getPanelConfig(['barchart', 'chartLabel'])}
-                        chartDesc={this.getPanelConfig(['barchart', 'chartDesc'])}
-                    />
-                    <BarChartSection
-                        domainLabel={this.getPanelConfig(['barchart', 'domainLabel'])}
-                        codomainLabel={this.getPanelConfig(['barchart', 'codomainLabel'])}
-                        valueFormatSpecifier={this.getPanelConfig(['barchart', 'valueFormatSpecifier'])}
-                        categories={categories}
-                        dataSets={this.getPanelConfig(['barchart', 'dataSets'])}
-                        />
-                </RecordedAnimation>
-            </>
+            </RecordedAnimation>
         );
     }
 }
