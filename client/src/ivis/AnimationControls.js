@@ -22,7 +22,6 @@ const defaultPlaybackSpeedSteps = [
     moment.duration(1, "d").asSeconds(),
     moment.duration(1, "w").asSeconds(),
     moment.duration(1, "M").asSeconds(),
-    moment.duration(6, "M").asSeconds(),
 ];
 
 @withComponentMixins([withAnimationControl])
@@ -644,12 +643,12 @@ class OnelineLayout extends Component {
             }>
                 <div className={"row"}>
                     {visibleButtonKeys.length > 0 &&
-                        <div className={`col-auto`}>
+                        <div className={"col-auto"}>
                             <ButtonGroup {...visibleButtons} className={this.props.buttonGroupClassName} />
                         </div>
                     }
                     {timeline && timeline.visible &&
-                        <div className={`col`}>
+                        <div className={"col"}>
                             <Timeline {...timeline} />
                         </div>
                     }

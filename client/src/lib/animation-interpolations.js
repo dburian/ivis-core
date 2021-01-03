@@ -31,4 +31,3 @@ export const expensiveCubicInterpolation = {
     arity: 10,
     func: cubicSplineIntpFunction,
 };
-

@@ -39,7 +39,7 @@ class LiveAnimation extends Component {
         intervalSpanAfter: moment.duration(3, 'm'),
 
         pollRate: defaultPollRate,
-        initialStatus: {isPlaying: false},
+        initialStatus: {},
     }
 
     constructor(props) {

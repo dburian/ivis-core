@@ -31,8 +31,7 @@ class RecordedAnimation extends Component {
         dataSources: PropTypes.object.isRequired,
 
         initialIntervalSpec: PropTypes.object,
-        intervalConfigPath: PropTypes.arrayOf(PropTypes.string),
-        defaultGetMinAggregationInterval: PropTypes.func,
+        getMinAggregationInterval: PropTypes.func,
 
         initialStatus: PropTypes.object,
         children: PropTypes.node,
@@ -58,8 +57,7 @@ class RecordedAnimation extends Component {
         return (
             <TimeContext
                 initialIntervalSpec={this.props.initialIntervalSpec}
-                configPath={this.props.intervalConfigPath}
-                getMinAggregationInterval={this.props.defaultGetMinAggregationInterval}
+                getMinAggregationInterval={this.props.getMinAggregationInterval}
             >
 
                 <AnimationDataAccess
@@ -822,9 +820,10 @@ class Animation extends Component {
             return;
         }
 
-        const prevIntvAbs = this.getIntervalAbsolute(prevProps);
-        const currIntvAbs = this.getIntervalAbsolute();
-        if (prevIntvAbs !== currIntvAbs) {
+        const prevIntvSpec = this.getIntervalSpec(prevProps);
+        const currIntvSpec = this.getIntervalSpec();
+        const sameIntv = prevIntvSpec.from === currIntvSpec.from && prevIntvSpec.to === currIntvSpec.to;
+        if (!sameIntv) {
             this.seekHandler(this.getIntervalAbsolute().from.valueOf());
         } else if (this.props.needsReseek && !prevProps.needsReseek) {
             this.seekHandler(this.state.status.position);

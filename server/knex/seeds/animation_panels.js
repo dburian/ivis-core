@@ -5,7 +5,7 @@ const path = require('path');
 const promisify = require('bluebird').promisify;
 const readFileAsync = promisify(fs.readFile);
 
-const exampleDirs = ['animation_1', 'animation_2', 'animation_3'].map(
+const exampleDirs = ['area_bar_rec', 'svg_line_pie_rec', 'server_monitor_live'].map(
     dirName => path.join('..', '..', 'examples', 'templates', dirName)
 );
 const templates = [
@@ -34,21 +34,21 @@ const templates = [
 const panels = [
     {
         name: 'COVID development in chosen districts',
-        description: 'Comparison of COVID development in various districts of Italy.',
+        description: 'Comparison of COVID development in various districts in Italy.',
         order: 1,
         template: 10,
         namespace: 1
     },
     {
         name: 'COVID testing in detail',
-        description: 'Comparison of testing results in various districts of Italy.',
+        description: 'Comparison of COVID testing results in various districts in Italy.',
         order: 2,
         template: 11,
         namespace: 1
     },
     {
         name: 'Live server monitoring',
-        description: 'Monitoring of Live server\'s resources such as the CPU load, memory statistics and disk load.',
+        description: 'Live monitoring of server\'s resources such as CPU load, memory statistics and disk load.',
         order: 3,
         template: 12,
         namespace: 1
@@ -58,7 +58,7 @@ const panels = [
 const paramsFN = 'params.json';
 const jsxFN = 'template.js';
 const stylesFN = 'styles.scss';
-const panel_paramsFN = 'panel_params.json';
+const panel_configFN = 'panel_config.json';
 
 async function deleteOldPanels(knex) {
     await knex.transaction(async tx => {
@@ -80,7 +80,7 @@ exports.seed = knex => (async() => {
 
     const workspaceId = await knex('workspaces').insert({
         name: 'Animation',
-        description: 'Workspace showcasing three use cases of the Recorded and Live animations.',
+        description: 'Workspace showcasing use cases of Recorded and Live animations.',
         order: 1,
         namespace: 1
     });
@@ -109,7 +109,7 @@ exports.seed = knex => (async() => {
             settings: JSON.stringify(templateSettings),
         });
 
-        const panelParams = JSON.parse(await readFileAsync(path.join(exampleDir, panel_paramsFN), 'utf8'));
+        const panelParams = JSON.parse(await readFileAsync(path.join(exampleDir, panel_configFN), 'utf8'));
 
         const panelId = await knex('panels').insert({
             ...panels[i],
