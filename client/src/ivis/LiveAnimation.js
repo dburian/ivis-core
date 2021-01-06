@@ -1,3 +1,10 @@
+"use strict";
+
+/**
+ * Defines {@link LiveAnimation} and compound components.
+ *
+ * @module LiveAnimation
+ */
 import React, {Component} from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
@@ -16,9 +23,36 @@ import {withComponentMixins} from "../lib/decorator-helpers";
 import {intervalAccessMixin, TimeContext} from "./TimeContext";
 import {IntervalSpec} from "./TimeInterval";
 
-const defaultPollRate = 1000;
 const minPollRate = 50;
 
+/**
+ * Implements Live animation - animation of real-time data by synchronizing with
+ * a [Master animation instance](./mai.md). Is composed of {@link
+ * AnimationDataAccess} and {@link Animation}.
+ *
+ * @param {object} props
+ * @param {string} props.animationId - identifier of the MAI to synchronize
+    * with.
+ * @param {moment.duration} [props.intervalSpanBefore = moment.duration(10, 'm')] - Interval defining the
+    * span between the left boundary of the viewed interval and the playback
+    * position. ([moment.duration](https://momentjs.com/docs/#/durations/))
+ * @param {moment.duration} [props.intervalSpanAfter = moment.duration(3, 'm')] - Interval defining the
+    * span between the playback position and the right boundary of the viewed
+    * interval. ([moment.duration](https://momentjs.com/docs/#/durations/))
+ * @param {number} [props.pollRate = 1000] - Number of milliseconds between
+    * subsequent polls of the MAI.
+ * @param {object} [props.initialStatus = {}] - Initial animation's state.
+ * @param {boolean} [props.initialStatus.isPlaying = false] - `true` if the
+    * animation should start playing once initialized, `false` otherwise.
+ * @param {object} props.dataSources - Data sources' configuration to pass to
+    * {@link AnimationDataAccess}.
+ * @param {object} props.dataSources.dataSourceKey - Configuration of the
+    * Data source with the given key. Note: `dataSourceKey` only stands for the
+    * actual Data source's key. This object is passed to the constructor of the
+    * configured Data source's type as `config`.
+ * @param {string} props.dataSources.dataSourceKey.type - Type of the Data
+    * source to configure. The types are keys of the {@link dataSourceTypes} constant.
+ */
 class LiveAnimation extends Component {
     static propTypes = {
         dataSources: PropTypes.object.isRequired,
@@ -38,7 +72,7 @@ class LiveAnimation extends Component {
         intervalSpanBefore: moment.duration(10, 'm'),
         intervalSpanAfter: moment.duration(3, 'm'),
 
-        pollRate: defaultPollRate,
+        pollRate: 1000,
         initialStatus: {},
     }
 
@@ -91,6 +125,23 @@ class LiveAnimation extends Component {
     }
 }
 
+/**
+ * GenericDataSource represents the simplest form of a Data source. It generates
+ * almost unprocessed data for current frame and optionally for past couple of
+ * keyframes.
+ *
+ * @param {object} config - Configuration object of the Data source.
+ * @param {{cid: string, signalCids: string[]}[]} config.sigSets - Signal sets to be animated.
+ * @param {string[]} [config.singnalAggs = ['avg']] - Aggregation functions that should
+    * be animated for each signal.
+ * @param {{func: function, arity: number}} config.interpolation - Interpolation function to be used.
+ * @param {number} config.history - Number of milliseconds worht of path keyframes to
+    * generate.
+ * @param {function} config.formatData - Formats data before the Data source stores
+    * them. The function is given all the data MAI is generating
+    * (`animationStatus.data`), the result is stored as a keyframe.
+ * @param {object} dataAccess - 'Parent' instance of {@link AnimationDataAccess}.
+ */
 class GenericDataSource {
     constructor(config, dataAccess) {
         this.conf = {
@@ -115,6 +166,11 @@ class GenericDataSource {
         this.clear();
     }
 
+    /**
+     * Adds new keyframe to the Data source's keyframe queue.
+     *
+     * @param {object} kf - MAI's generated data (i.e. a keyframe).
+     */
     addKeyframe(kf) {
         const data = this.conf.formatData ? this.conf.formatData(kf.data) : kf.data;
 
@@ -144,6 +200,29 @@ class GenericDataSource {
         return emptyData;
     }
 
+    /**
+     * GenericDataSource's keyframe data. Note that the properties' names are
+     * only descriptive and not the actual keys.
+     *
+     * @typedef {object} GenericKeyframeData
+     *
+     * @prop {object} signalSetCid - Signals of the given signal set to be
+        * visualized.
+     * @prop {object} signalSetCid.signalCid - Aggragations of the given signal
+        * to be visualized.
+     * @prop {number} signalSetCid.signalCid.aggFuncName - Value of the given
+        * aggregation function to be visualized.
+     */
+    /**
+     * Generates visualization data.
+     *
+     * @param {number} ts - Unix timestamp for which to generate visualization
+        * data.
+     * @returns {GenericKeyframeData | {ts: number, data:
+        * GenericKeyframeData}} - Visualization data generated by the Data
+        * source. Format of
+        * visualization data depends on the `history` config. property.
+     */
     shiftTo(ts) {
         let minKfCount = this.conf.intpArity;
 
@@ -217,6 +296,20 @@ class GenericDataSource {
     }
 }
 
+
+/**
+ * TimeSeriesDataSource manages data for components based on TimeBasedChartBase.
+ *
+ * @param {object} config - Configuration object of the Data source.
+ * @param {{cid: string, signalCids: string[]}[]} config.sigSets - Signal sets to be animated.
+ * @param {string[]} [config.singnalAggs = ['avg']] - Aggregation functions that should
+    * be animated for each signal.
+ * @param {{func: function, arity: number}} config.interpolation - Interpolation function to be used.
+ * @param {function} config.formatData - Formats data before the Data source stores
+    * them. The function is given all the data MAI is generating
+    * (`animationStatus.data`), the result is stored as a keyframe.
+ * @param {object} dataAccess - 'Parent' instance of {@link AnimationDataAccess}.
+ */
 class TimeSeriesDataSource extends GenericDataSource{
     constructor(config, dataAccess) {
         super({...config}, dataAccess);
@@ -224,6 +317,40 @@ class TimeSeriesDataSource extends GenericDataSource{
         this.lastGenDataRev = [];
     }
 
+    /**
+     * TimeSeriesDataSource's visualization data.
+     *
+     * @typedef {object} TimeSeriesVisualizationData
+     *
+     * @prop {object} signalSetCid - Visualization data for the give signal set.
+        * Note: the property's name is only descriptive - not literal.
+     * @prop {TimeSeriesKeyframe} signalSetCid.prev - Data measured before the currently viewed
+        * interval.
+     * @prop {TimeSeriesKeyframe[]} signalSetCid.main - Data measured inside the currently viewed
+        * interval.
+     * @prop {TimeSeriesKeyframe} signalSetCid.next - Data measured after the currently viewed
+        * interval.
+     */
+    /**
+     * TimeSeriesDataSource's keyframe data. Note that the properties' names are
+     * only descriptive and not the actual keys.
+     *
+     * @typedef {object} TimeSeriesKeyframe
+     *
+     * @prop {moment} ts - Timestamp of the keyframe.
+     * @prop {object} signalCid - Aggragations of the given signal
+        * to be visualized.
+     * @prop {number} signalCid.aggFuncName - Value of the given
+        * aggregation function to be visualized.
+     */
+    /**
+     * Generates visualization data.
+     *
+     * @param {number} ts - Unix timestamp for which to generate visualization
+        * data.
+     * @returns {TimeSeriesVisualizationData} - Visualization data generated by the Data
+        * source.
+     */
     shiftTo(ts) {
         const prevs = this._getPrevs();
 
@@ -290,11 +417,30 @@ class TimeSeriesDataSource extends GenericDataSource{
     }
 }
 
+/**
+ * Defines available Data sources.
+ *
+ * @prop {object} generic - {@link GenericDataSource}.
+ * @prop {object} timeSeries - {@link TimeSeriesDataSource}.
+ */
 const dataSourceTypes = {
     generic: GenericDataSource,
     timeSeries: TimeSeriesDataSource,
 };
 
+
+/**
+ * Provides high-level data operations to {@link Animation}.
+ *
+ * @param {object} props
+ * @param {object} props.dataSources - Data sources' configuration.
+ * @param {object} props.dataSources.dataSourceKey - Configuration of the
+    * Data source with the given key. Note: `dataSourceKey` only stands for the
+    * actual Data source's key. This object is passed to the constructor of the
+    * configured Data source's type as `config`.
+ * @param {string} props.dataSources.dataSourceKey.type - Type of the Data
+    * source to configure. The types are keys of the {@link dataSourceTypes} constant.
+ */
 @withComponentMixins([intervalAccessMixin()])
 class AnimationDataAccess extends Component {
     static propTypes = {
@@ -324,18 +470,30 @@ class AnimationDataAccess extends Component {
         }
     }
 
+    /**
+      * Adds keyframe to animate.
+      * @param {object} kf - MAI's generated data.
+    */
     addKeyframe(kf) {
         for (const dtSrcKey of Object.keys(this.dataSources)) {
             this.dataSources[dtSrcKey].addKeyframe(kf);
         }
     }
 
+    /**
+      * Deletes all known keyframes.
+      */
     clearKeyframes() {
         for (const dtSrcKey of Object.keys(this.dataSources)) {
             this.dataSources[dtSrcKey].clear();
         }
     }
 
+    /**
+     * Updates the visualization data to the given timestamp.
+     *
+     * @param {number} ts - Unix timestamp of the next frame.
+     */
     shiftTo(ts) {
         const data = {};
         for (const dtSrcKey of Object.keys(this.dataSources)) {
@@ -371,6 +529,32 @@ class AnimationDataAccess extends Component {
     }
 }
 
+
+/**
+ * Manages Live animation. Provides:
+ * [AnimationDataContext](./AnimationCommon.md#animationdatacontext),
+ * [AnimationStatusContext](./AnimationCommon.md#animationstatuscontext),
+ * [AnimationControlContext](./AnimationCommon.md#animationcontrolcontext),
+ *
+ * @param {object} props
+ * @param {string} props.animationId - identifier of the MAI to synchronize
+    * with.
+ * @param {moment.duration} props.intervalSpanBefore - Interval defining the
+    * span between the left boundary of the viewed interval and the playback
+    * position. ([moment.duration](https://momentjs.com/docs/#/durations/))
+ * @param {moment.duration} props.intervalSpanAfter - Interval defining the
+    * span between the playback position and the right boundary of the viewed
+    * interval. ([moment.duration](https://momentjs.com/docs/#/durations/))
+ * @param {number} props.pollRate - Number of milliseconds between
+    * subsequent polls of the MAI.
+ * @param {object} props.initialStatus - Initial animation's state.
+ * @param {boolean} props.initialStatus.isPlaying - `true` if the
+    * animation should start playing once initialized, `false` otherwise.
+ * @param {function} props.addKeyframe - Adds keyframe to animate.
+ * @param {function} props.clearKeyframes - Clears existing animated keyframes.
+ * @param {function} props.shiftTo - Obtains visualization data for a given timestamp.
+ * @param {function} props.getEmptyData - Obtains empty visualization data.
+ */
 @withComponentMixins([intervalAccessMixin()])
 class Animation extends Component {
     static propTypes = {
@@ -517,6 +701,11 @@ class Animation extends Component {
     }
 
 
+    /**
+     * The update-draw cycle of the animation.
+     * @param {DOMHighResTimeStamp} elapsedTs - The timestamp of the next
+        * repaint.
+     */
     refresh(elapsedTs) {
         const interval = this.savedInterval || elapsedTs - this.lastRefreshTs;
         this.savedInterval = null;
@@ -564,16 +753,26 @@ class Animation extends Component {
     }
 
 
+    /**
+     * Implements the `play` control function.
+    */
     play() {
         this.setStatus({isPlaying: true, isBuffering: true});
         this.sendControlRequest("play");
     }
 
+    /**
+     * Implements the `pause` control function.
+    */
     pause() {
         this.setStatus(this.handlePause());
         this.sendControlRequest("pause");
     }
 
+    /**
+     * Forwards requests to the MAI.
+     * @param {string} controlName - Name of the control. Ex.: 'play' or 'pause.
+     */
     @withAsyncErrorHandler
     async sendControlRequest(controlName) {
         const url = getUrl("rest/animation/" + this.props.animationId + "/" + controlName);
@@ -584,6 +783,9 @@ class Animation extends Component {
         await ctrlPromise;
     }
 
+    /**
+     * Requests and then processes MAI's animation state.
+     */
     @withAsyncErrorHandler
     async fetchStatus() {
         const animationId = this.props.animationId;

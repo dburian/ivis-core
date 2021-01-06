@@ -1,5 +1,10 @@
 "use strict";
 
+/**
+ * Defines animaiton control components.
+ *
+ * @module AnimationControls
+ */
 import React, {Component} from "react";
 import PropTypes from "prop-types";
 import {select, mouse} from "d3-selection";
@@ -24,6 +29,16 @@ const defaultPlaybackSpeedSteps = [
     moment.duration(1, "M").asSeconds(),
 ];
 
+/**
+ * Displays a play/pause button. Consumes:
+ * [AnimationStatusContext](./AnimationCommon.md#animationstatuscontext) and
+ * [AnimationControlContext](./AnimationCommon.md#animationcontrolcontext) and
+ *
+ * @param {object} props
+ * @param {boolean} props.enabled - Determines if the control should be enabled
+    * (interactive) or not.
+ * @param {string} props.className - Specifies the class name of the button.
+ */
 @withComponentMixins([withAnimationControl])
 class PlayPauseButton extends Component {
     static propTypes = {
@@ -76,6 +91,16 @@ class PlayPauseButton extends Component {
     }
 }
 
+/**
+ * Displays a stop button. Consumes:
+ * [AnimationStatusContext](./AnimationCommon.md#animationstatuscontext) and
+ * [AnimationControlContext](./AnimationCommon.md#animationcontrolcontext) and
+ *
+ * @param {object} props
+ * @param {boolean} props.enabled - Determines if the control should be enabled
+    * (interactive) or not.
+ * @param {string} props.className - Specifies the class name of the button.
+ */
 @withComponentMixins([withAnimationControl])
 class StopButton extends Component {
     static propTypes = {
@@ -101,6 +126,18 @@ class StopButton extends Component {
     }
 }
 
+/**
+ * Displays a jump forward button. Consumes:
+ * [AnimationStatusContext](./AnimationCommon.md#animationstatuscontext) and
+ * [AnimationControlContext](./AnimationCommon.md#animationcontrolcontext) and
+ *
+ * @param {object} props
+ * @param {boolean} props.enabled - Determines if the control should be enabled
+    * (interactive) or not.
+ * @param {number} jumpFactor - Specifies the jump distance as a factor of the
+    * total played back interval.
+ * @param {string} props.className - Specifies the class name of the button.
+ */
 @withComponentMixins([withAnimationControl, intervalAccessMixin()])
 class JumpForwardButton extends Component {
     static propTypes = {
@@ -145,6 +182,18 @@ class JumpForwardButton extends Component {
     }
 }
 
+/**
+ * Displays a jump backward button. Consumes:
+ * [AnimationStatusContext](./AnimationCommon.md#animationstatuscontext) and
+ * [AnimationControlContext](./AnimationCommon.md#animationcontrolcontext) and
+ *
+ * @param {object} props
+ * @param {boolean} props.enabled - Determines if the control should be enabled
+    * (interactive) or not.
+ * @param {number} jumpFactor - Specifies the jump distance as a factor of the
+    * total played back interval.
+ * @param {string} props.className - Specifies the class name of the button.
+ */
 @withComponentMixins([withAnimationControl, intervalAccessMixin()])
 class JumpBackwardButton extends Component {
     static propTypes = {
@@ -189,6 +238,28 @@ class JumpBackwardButton extends Component {
     }
 }
 
+/**
+ * Displays a button toggling a drop-down menu, from which the user can select
+ * playback speed. Consumes:
+ * [AnimationStatusContext](./AnimationCommon.md#animationstatuscontext) and
+ * [AnimationControlContext](./AnimationCommon.md#animationcontrolcontext) and
+
+ *
+ * @param {object} props
+ * @param {boolean} props.enabled - Determines if the control should be enabled
+    * (interactive) or not.
+ * @param {function} props.factorFormat - Optional formatting function of the
+    * factors' labels.
+ * @param {number[]} props.steps - Possible factors to use as
+    * `playbackSpeedFactor`.
+ * @param {object} props.classNames - Specifies the class names used throughout
+    * the component.
+ * @param {string} props.classNames.dropdown - Class name of the wrapping div.
+ * @param {string} props.classNames.button - Class name of the toggle button.
+ * @param {string} props.classNames.menu - Class name of the drop-down menu.
+ * @param {string} props.classNames.menuItem - Class name of the drop-down menu
+    * item.
+*/
 @withComponentMixins([withAnimationControl])
 class ChangeSpeedDropdown extends Component {
     static propTypes = {
@@ -282,6 +353,35 @@ class ChangeSpeedDropdown extends Component {
     }
 }
 
+/**
+ * Displays a playback timeline visualizig the playback position and played back
+ * time period. Consumes:
+ * [AnimationStatusContext](./AnimationCommon.md#animationstatuscontext) and
+ * [AnimationControlContext](./AnimationCommon.md#animationcontrolcontext) and
+ *
+ * @param {object} props
+ * @param {boolean} props.enabled - Determines if the control should be enabled
+    * (interactive) or not.
+ * @param {string} [props.positionFormatString = 'L LTS'] - Format of Timeline's
+    * position label. Possible tokens can be found at
+    * [moment.format](https://momentjs.com/docs/#/displaying/format)
+ * @param {object} props.classNames - Specifies the class names used throughout
+    * the component.
+ * @param {string} props.classNames.timeline - Class name of the whole svg
+    * element.
+ * @param {string} props.classNames.axis - Class name of Timeline's axis.
+ * @param {string} props.classNames.progressBar - Class name of Timeline's
+    * progressBar.
+ * @param {string} props.classNames.positionLabel - Class name of Timeline's
+    * position label.
+ * @param {string} props.classNames.hoverPositionLabel - Class name of
+    * Timeline's position label when hovering.
+ * @param {string} props.classNames.pointer - Class name of the progress
+    * bar's point.
+ * @param {string} props.classNames.tick - Class name of Timeline's ticks.
+ * @param {string} props.classNames.tickLabel - Class name of Timeline's tick
+    * labels.
+*/
 @withComponentMixins([withAnimationControl, intervalAccessMixin()])
 class Timeline extends Component {
     static propTypes = {
@@ -577,6 +677,26 @@ class Timeline extends Component {
     }
 }
 
+/**
+ * Displays all control buttons as a button group.
+ *
+ * @param {object} props
+ * @param {object} props.playPause - Properties of {@link PlayPauseButton}.
+ * @param {boolean} props.playPause.visible - Determines if the button will be
+ * displayed.
+ * @param {object} props.stop - Properties of {@link StopButton}.
+ * @param {boolean} props.stop.visible - Determines if the button will be
+ * displayed.
+ * @param {object} props.jumpForward - Properties of {@link JumpForwardButton}.
+ * @param {boolean} props.jumpForward.visible - Determines if the button will be
+ * displayed.
+ * @param {object} props.jumpBackward - Properties of {@link JumpBackwardButton}.
+ * @param {boolean} props.jumpBackward.visible - Determines if the button will be
+ * displayed.
+ * @param {object} props.changeSpeed - Properties of {@link ChangeSpeedDropdown}.
+ * @param {boolean} props.changeSpeed.visible - Determines if the dropdown will be
+ * displayed.
+ */
 class ButtonGroup extends Component {
     static propTypes = {
         playPause: PropTypes.object,
@@ -616,6 +736,29 @@ class ButtonGroup extends Component {
     }
 }
 
+/**
+ * Displays all control components in one line.
+ *
+ * @param {object} props
+ * @param {object} props.playPause - Properties of {@link PlayPauseButton}.
+ * @param {boolean} props.playPause.visible - Determines if the button will be
+ * displayed.
+ * @param {object} props.stop - Properties of {@link StopButton}.
+ * @param {boolean} props.stop.visible - Determines if the button will be
+ * displayed.
+ * @param {object} props.jumpForward - Properties of {@link JumpForwardButton}.
+ * @param {boolean} props.jumpForward.visible - Determines if the button will be
+ * displayed.
+ * @param {object} props.jumpBackward - Properties of {@link JumpBackwardButton}.
+ * @param {boolean} props.jumpBackward.visible - Determines if the button will be
+ * displayed.
+ * @param {object} props.changeSpeed - Properties of {@link ChangeSpeedDropdown}.
+ * @param {boolean} props.changeSpeed.visible - Determines if the dropdown will be
+ * displayed.
+ * @param {object} props.timeline - Properties of {@link Timeline}.
+ * @param {boolean} props.timeline.visible - Determines if the dropdown will be
+ * displayed.
+ */
 class OnelineLayout extends Component {
     static propTypes = {
         playPause: PropTypes.object,

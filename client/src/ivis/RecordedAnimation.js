@@ -1,3 +1,10 @@
+"use strict";
+
+/**
+ * Defines {@link RecordedAnimation} and compound components.
+ *
+ * @module RecordedAnimation
+ */
 import React, {Component} from "react";
 import moment from "moment";
 import _ from "lodash";
@@ -26,6 +33,33 @@ const defaultMaxTimeFetched = 30000;
 const defaultMaxKeyframesStored = 1000;
 const defaultPlaybackSpeedAggFactor = 5;
 
+
+/**
+ * Implements Recorded animation - animation of time-series signal sets.
+    * Is composed of {@link AnimationDataAccess} and {@link Animation}.
+ *
+ * @param {object} props
+ * @param {string} [props.initialIntervalSpec = new IntervalSpec('now-7d',
+    * 'now', null, null)] - Initial specification of animation's time domain.
+ * @param {function} props.getMinAggregationInterval - Function to compute the minimal
+    * aggregation interval based on the absolut boundaries of the current interval
+    * specified as `moment`s.
+ * @param {object} [props.initialStatus = {}] - Initial animation's state.
+ * @param {boolean} [props.initialStatus.isPlaying = false] - `true` if the animation
+    * should start playing once initialized, `false` otherwise.
+ * @param {integer} props.initialStatus.position - Unix timestamp specifying the
+    * initial animation's position.
+ * @param {float} [props.initialStatus.playbackSpeedFactor = 1.0] - Initial
+    * playback speed.
+ * @param {object} props.dataSources - Data sources' configuration to pass to
+    * {@link AnimationDataAccess}.
+ * @param {object} props.dataSources.dataSourceKey - Configuration of the
+    * Data source with the given key. Note: `dataSourceKey` only stands for the
+    * actual Data source's key. This object is passed to the constructor of the
+    * configured Data source's type as `config`.
+ * @param {string} props.dataSources.dataSourceKey.type - Type of the Data
+    * source to configure. The types are keys of the {@link dataSourceTypes} constant.
+ */
 class RecordedAnimation extends Component {
     static propTypes = {
         dataSources: PropTypes.object.isRequired,
@@ -69,6 +103,28 @@ class RecordedAnimation extends Component {
     }
 }
 
+/**
+ * GenericDataSource represents the simplest form of a Data source. It generates
+ * almost unprocessed data for current frame and optionally for past couple of
+ * keyframes.
+ *
+ * @param {object} config - Configuration object of the Data source.
+ * @param {{cid: string, signals: {cid: string}[]}[]} config.sigSets - Signal sets to be animated.
+ * @param {string[]} [config.singnalAggs = ['avg']] - Aggregation functions that should
+    * be animated for each signal.
+ * @param {{func: function, arity: number}} config.interpolation - Interpolation function to be used.
+ * @param {number} config.history - Number of milliseconds worht of path keyframes to
+    * generate.
+ * @param {boolean} [config.useGlobalAggInterval = false] - `false` if the
+    * length of aggregation interval should be determined based on playback speed, `true` otherwise.
+ * @param {number} [config.playbackSpeedAggFactor = 5] - Factor to use when
+    * computing aggregation interval and `useGlobalAggInterval` is set to `false`.
+ * @param {number} [config.maxKeyframesStored = 1000] - Maximal number of
+    * keyframes the Data Source should store ahead.
+ * @param {number} [config.maxTimeStored = 30000] - Maximal time in milliseconds
+    * worth of keyframes the Data source should store ahead.
+ * @param {object} dataAccess - 'Parent' instance of {@link AnimationDataAccess}.
+ */
 class GenericDataSource {
     constructor(config, dataAccess) {
         this.dataAccess = dataAccess;
@@ -125,6 +181,12 @@ class GenericDataSource {
 
         return data;
     }
+    /**
+     * Determines if the Data source can update the visualization data to given
+     * timestamp, or if he needs to fetch first.
+     *
+     * @param {number} ts - Unix timestamp to update the visualization data to.
+     */
     canShiftTo(ts) {
         return Object.values(this.sigSets).every(sigSet =>
             !sigSet.hasMoreData ||
@@ -134,10 +196,36 @@ class GenericDataSource {
             )
         );
     }
+    /**
+     * Lets the Data source know, that it fechted late.
+     */
     didMissFetch() {
         this.timePillowFactor *= 2;
     }
 
+    /**
+     * GenericDataSource's keyframe data. Note that the properties' names are
+     * only descriptive and not the actual keys.
+     *
+     * @typedef {object} GenericKeyframeData
+     *
+     * @prop {object} signalSetCid - Signals of the given signal set to be
+        * visualized.
+     * @prop {object} signalSetCid.signalCid - Aggragations of the given signal
+        * to be visualized.
+     * @prop {number} signalSetCid.signalCid.aggFuncName - Value of the given
+        * aggregation function to be visualized.
+     */
+    /**
+     * Generates visualization data.
+     *
+     * @param {number} ts - Unix timestamp for which to generate visualization
+        * data.
+     * @returns {GenericKeyframeData | {ts: number, data:
+        * GenericKeyframeData}} - Visualization data generated by the Data
+        * source. Format of visualization data depends on the `history` config.
+        * property.
+     */
     shiftTo(ts) {
         if (this.conf.history) {
             const historyFirstTs = ts - this.conf.history;
@@ -164,6 +252,7 @@ class GenericDataSource {
 
             if (sigSet.buffer.length < arity ||
                 sigSet.buffer[sigSet.buffer.length - 1].ts < ts) {
+                //Not enough data in the buffer
 
                 sigSet.buffer = [];
                 sigSet.intp.clearArgs();
@@ -172,6 +261,7 @@ class GenericDataSource {
                     sigSet.intp.rebuildArgs(sigSet.buffer);
                 }
             } else if (needsShift()) {
+                //Outdated cached keyframes
                 while(needsShift()) {
                     const kfsToDelete = Math.min(
                         sigSet.buffer.length - arity,
@@ -183,6 +273,7 @@ class GenericDataSource {
 
                 sigSet.intp.rebuildArgs(sigSet.buffer);
             } else if (!sigSet.intp.hasCachedArgs) {
+                //No cached keyframes
                 sigSet.intp.rebuildArgs(sigSet.buffer);
             }
 
@@ -195,6 +286,11 @@ class GenericDataSource {
         return data;
     }
 
+    /**
+     * Acquires the Data source's seek queries.
+     * @param {number} ts - Seeked unix timestamp.
+     * @returns {object[]} - Array of queries to execute.
+     */
     getSeekQueries(ts) {
         const queries = [];
         for (const sigSet of Object.values(this.sigSets)) {
@@ -210,6 +306,11 @@ class GenericDataSource {
 
         return queries;
     }
+    /**
+     * Processes the seek queries' results.
+     * @param {object[]} qryResults - Obtained data by the seek queries.
+     * @param {object[]} queries - The just executed queries.
+     */
     processSeekQueries(qryResults, queries) {
         this._reset();
 
@@ -241,6 +342,13 @@ class GenericDataSource {
         }
     }
 
+    /**
+     * Acquires the Data source's next-chunk queries.
+     * @param {number} maxPredictedFetchTime - Maximal predicted fetch time.
+        * Gives the Data source some information to decide which sig sets it needs
+        * to fetch.
+     * @returns {object[]} - Array of queries to execute.
+     */
     getNextChunkQueries(maxPredictedFetchTime) {
         const queries = [];
         for (const sigSet of this._getSigSetsToFetch(maxPredictedFetchTime)) {
@@ -272,6 +380,11 @@ class GenericDataSource {
 
         return queries;
     }
+    /**
+     * Processes the next-chunk queries' results.
+     * @param {object[]} qryResults - Obtained data by the next-chunk queries.
+     * @param {object[]} queries - The just executed queries.
+     */
     processNextChunkQueries(qryResults, queries) {
         const fetchedSigSetCids = queries.map(qry => qry.args[0]);
         for (const sigSetCid of fetchedSigSetCids) {
@@ -407,6 +520,17 @@ class GenericDataSource {
     }
 }
 
+/**
+ * TimeSeriesDataSource manages data for components based on TimeBasedChartBase.
+ *
+ * @param {object} config - Configuration object of the Data source.
+ *
+ * @param {{cid: string, signals: {cid: string}[]}[]} config.sigSets - Signal sets to be animated.
+ * @param {string[]} [config.singnalAggs = ['avg']] - Aggregation functions that should
+    * be animated for each signal.
+ * @param {{func: function, arity: number}} config.interpolation - Interpolation function to be used.
+ * @param {object} dataAccess - 'Parent' instance of {@link AnimationDataAccess}.
+ */
 class TimeSeriesDataSource {
     constructor(config, dataAccess) {
         this.dataAccess = dataAccess;
@@ -471,10 +595,50 @@ class TimeSeriesDataSource {
         }
     }
 
+    /**
+     * Determines if the Data source can update the visualization data to given
+     * timestamp, or if he needs to fetch first.
+     *
+     * @param {number} ts - Unix timestamp to update the visualization data to.
+     */
     canShiftTo() {
         return true;
     }
 
+    /**
+     * TimeSeriesDataSource's visualization data.
+     *
+     * @typedef {object} TimeSeriesVisualizationData
+     *
+     * @prop {object} signalSetCid - Visualization data for the give signal set.
+        * Note: the property's name is only descriptive - not literal.
+     * @prop {TimeSeriesKeyframe} signalSetCid.prev - Data measured before the currently viewed
+        * interval.
+     * @prop {TimeSeriesKeyframe[]} signalSetCid.main - Data measured inside the currently viewed
+        * interval.
+     * @prop {TimeSeriesKeyframe} signalSetCid.next - Data measured after the currently viewed
+        * interval.
+     */
+    /**
+     * TimeSeriesDataSource's keyframe data. Note that the properties' names are
+     * only descriptive and not the actual keys.
+     *
+     * @typedef {object} TimeSeriesKeyframe
+     *
+     * @prop {moment} ts - Timestamp of the keyframe.
+     * @prop {object} signalCid - Aggragations of the given signal
+        * to be visualized.
+     * @prop {number} signalCid.aggFuncName - Value of the given
+        * aggregation function to be visualized.
+     */
+    /**
+     * Generates visualization data.
+     *
+     * @param {number} ts - Unix timestamp for which to generate visualization
+        * data.
+     * @returns {TimeSeriesVisualizationData} - Visualization data generated by the Data
+        * source.
+     */
     shiftTo(ts) {
         const data = {};
         const arity = this.conf.intpArity;
@@ -543,7 +707,15 @@ class TimeSeriesDataSource {
         return emptyData;
     }
 
+    /**
+     * Lets the Data source know, that it fechted late.
+     */
     didMissFetch() {}
+    /**
+     * Acquires the Data source's seek queries.
+     * @param {number} ts - Seeked unix timestamp.
+     * @returns {object[]} - Array of queries to execute.
+     */
     getSeekQueries(ts) {
         this.lastSeekTo = ts;
         const intvAbs = this.dataAccess.getIntervalAbsolute();
@@ -573,6 +745,11 @@ class TimeSeriesDataSource {
 
         return queries;
     }
+    /**
+     * Processes the seek queries' results.
+     * @param {object[]} qryResults - Obtained data by the seek queries.
+     * @param {object[]} queries - The just executed queries.
+     */
     processSeekQueries(qryResults, queries) {
         if (qryResults.length !== 0) {
 
@@ -600,17 +777,47 @@ class TimeSeriesDataSource {
         }
     }
 
+    /**
+     * Acquires the Data source's next-chunk queries.
+     * @param {number} maxPredictedFetchTime - Maximal predicted fetch time.
+        * Gives the Data source some information to decide which sig sets it needs
+        * to fetch.
+     * @returns {object[]} - Array of queries to execute.
+     */
     getNextChunkQueries() {
         return [];
     }
+    /**
+     * Processes the next-chunk queries' results.
+     * @param {object[]} qryResults - Obtained data by the next-chunk queries.
+     * @param {object[]} queries - The just executed queries.
+     */
     processNextChunkQueries() {}
 }
 
+/**
+ * Defines available Data sources.
+ *
+ * @prop {object} generic - {@link GenericDataSource}.
+ * @prop {object} timeSeries - {@link TimeSeriesDataSource}.
+ */
 const dataSources = {
     generic: GenericDataSource,
     timeSeries: TimeSeriesDataSource,
 };
 
+/**
+ * Provides high-level data operations to {@link Animation}
+ *
+ * @param {object} props
+ * @param {object} props.dataSources - Data sources' configuration.
+ * @param {object} props.dataSources.dataSourceKey - Configuration of the
+    * Data source with the given key. Note: `dataSourceKey` only stands for the
+    * actual Data source's key. This object is passed to the constructor of the
+    * configured Data source's type as `config`.
+ * @param {string} props.dataSources.dataSourceKey.type - Type of the Data
+    * source to configure. The types are keys of the {@link dataSourceTypes} constant.
+ */
 @withComponentMixins([intervalAccessMixin()])
 class AnimationDataAccess extends Component {
     static propTypes = {
@@ -644,6 +851,11 @@ class AnimationDataAccess extends Component {
         }
     }
 
+    /**
+     * Fetches data for the given timestamp.
+     *
+     * @param {number} ts - Unix timestamp of the seeked position.
+     */
     async seek(ts) {
         if (this.state.needsReseek) this.setState({needsReseek: false});
 
@@ -654,6 +866,11 @@ class AnimationDataAccess extends Component {
         return this.shiftTo(ts);
     }
 
+    /**
+     * Refreshes visualization data to the given timestamp.
+     *
+     * @param {number} ts - Next frame's timestamp.
+     */
     refreshTo(ts) {
         if (this.state.needsReseek) return {data: null};
 
@@ -695,6 +912,17 @@ class AnimationDataAccess extends Component {
     }
 
 
+    /**
+     * Executes data queries of the given type of the given Data sources.
+     *
+     * @param {string[]} dataSrcKeys - Data sources' keys whose queries to execute.
+     * @param {string} getQueriesFuncName - Name of the function to call on each
+        * Data source to obtain the query objects.
+     * @param {array} getQueriesFuncArgs - Arguments with which to call the
+     * `getQueriesFuncName` function.
+     * @param {string} processQueriesFuncName - Name of the function to call on
+     * each Data source to process the received results.
+     */
     @withAsyncErrorHandler
     async runQueries(dataSrcKeys, getQueriesFuncName, getQueriesFuncArgs, processQueriesFuncName) {
         const _runQueries = async () => {
@@ -777,6 +1005,35 @@ class AnimationDataAccess extends Component {
     }
 }
 
+/**
+ * Manages Recorded animation. Provides:
+ * [AnimationDataContext](./AnimationCommon.md#animationdatacontext),
+ * [AnimationStatusContext](./AnimationCommon.md#animationstatuscontext),
+ * [AnimationControlContext](./AnimationCommon.md#animationcontrolcontext),
+ *
+ * @param {object} props
+ * @param {string} [props.initialIntervalSpec = new IntervalSpec('now-7d',
+    * 'now', null, null)] - Initial specification of animation's time domain.
+ * @param {function} props.getMinAggregationInterval - Function to compute the minimal
+    * aggregation interval based on the absolut boundaries of the current interval
+    * specified as `moment`s.
+ * @param {object} [props.initialStatus = {}] - Initial animation's state.
+ * @param {boolean} [props.initialStatus.isPlaying = false] - `true` if the animation
+    * should start playing once initialized, `false` otherwise.
+ * @param {integer} props.initialStatus.position - Unix timestamp specifying the
+    * initial animation's position.
+ * @param {float} [props.initialStatus.playbackSpeedFactor = 1.0] - Initial
+    * playback speed.
+ * @param {function} props.seek - Updates the visualization data, when the
+    * animation seeks.
+ * @param {function} props.refreshTo - Obtains updated visualization data for a
+    * given timestamp.
+ * @param {function} props.getEmptyData - Obtains empty visualization data.
+ * @param {boolean} props.needsReseek - `true` if the {@link
+    * AnimationDataAccess} needs to reseek, `false` otherwise.
+ * @param {object} props.fetchError - Error object signifying the animation
+    * should stop and report the error.
+ */
 @withComponentMixins([intervalAccessMixin()])
 class Animation extends Component {
     static propTypes = {
@@ -887,34 +1144,63 @@ class Animation extends Component {
         return true;
     }
 
+    /**
+     * Implements the `play` control function.
+    */
     playHandler() {
         this.startRefreshing();
         this.setStatus({isPlaying: true});
     }
 
+    /**
+     * Implements the `pause` control function.
+    */
     pauseHandler() {
         this.stopRefreshing();
         this.setStatus({isPlaying: false});
     }
 
+    /**
+     * Implements the `stop` control function.
+    */
     stopHandler() {
         if (this.state.status.isPlaying) this.pauseHandler();
         this.seekHandler(this.getIntervalAbsolute().from.valueOf());
     }
 
+    /**
+     * Implements the `jumpForward` control function.
+     *
+     * @param {number} shiftMs - Length of the jump interval as in milliseconds.
+    */
     jumpForwardHandler(shiftMs) {
         this.seekHandler(this.state.status.position + shiftMs);
     }
 
+    /**
+     * Implements the `jumpBackward` control function.
+     *
+     * @param {number} shiftMs - Length of the jump interval as in milliseconds.
+    */
     jumpBackwardHandler(shiftMs) {
         this.seekHandler(this.state.status.position - shiftMs);
     }
 
+    /**
+     * Implements the `changePlaybackSpeed` control function.
+     *
+     * @param {number} factor - New float to set as `playbackSpeedFactor`.
+    */
     changePlaybackSpeedHandler(factor) {
         this.props.setPlaybackSpeedFactor(factor);
         this.setStatus({playbackSpeedFactor: factor});
     }
 
+    /**
+     * Implements the `seek` control function.
+     *
+     * @param {number} ts - New unix timestamp to set as `position`.
+    */
     @withAsyncErrorHandler
     async seekHandler(ts) {
         const clampedTs = this.clampPos(ts);
@@ -929,6 +1215,11 @@ class Animation extends Component {
         }
     }
 
+    /**
+     * The update-draw cycle of the animation.
+     * @param {DOMHighResTimeStamp} elapsedTs - The timestamp of the next
+        * repaint.
+    */
     refresh(msSinceOrigin) {
         const interval = this.savedInterval || msSinceOrigin - this.lastRefreshTs;
         this.savedInterval = null;
@@ -980,9 +1271,6 @@ class Animation extends Component {
 
         this.lastRefreshTs = performance.now();
         this.nextFrameId = requestAnimationFrame(this.refreshBound);
-    }
-
-    scheduleRefresh() {
     }
 
     stopRefreshing() {
