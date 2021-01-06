@@ -23,3 +23,6 @@ This repo follows a basic policy of branch naming:
 
 - [Concepts](./docs/CONCEPTS.md) - Description of fundamental concepts of IVIS.
 
+- [Documentation of the animation extension](./docs/ANIMATION.md) - List of the
+    chief implemented modules and their documentation.
+
